@@ -1,0 +1,8 @@
+node_modules/
+
+*.local.*
+
+package-lock.json
+
+**/__tmp__
+*.tmp.*

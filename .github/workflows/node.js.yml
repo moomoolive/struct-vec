@@ -1,0 +1,18 @@
+name: "CI"
+
+on:
+  push:
+    branches: ["master", "dev"]
+  pull_request:
+    branches: ["master"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: build_step
+        run: npm i
+      - name: run ci runner
+        run: npm run ci

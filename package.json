@@ -1,0 +1,53 @@
+{
+  "name": "struct-vec",
+  "version": "0.1.0",
+  "description": "Javascript array-like data structures designed for multithreading",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "npm run test:lib && npm run build:all && npm run test:codegen && npm run post-build",
+    "test:lib": "jest --runInBand ./src",
+    "test:codegen": "node ./codegenTests/codegen.mjs && node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --config=./codegenTests/jest.config.mjs ./codegenTests",
+    "test:watch": "jest --runInBand --watchAll ./src",
+    "test:dev": "jest --runInBand ./src/tests/generation",
+    "bench:node": "node ./benchmarks/public/index.mjs",
+    "bench:web": "nodemon ./benchmarks/server.mjs",
+    "bench:deno": "deno run --allow-read benchmarks/public/index.mjs",
+    "prepare": "npm run build && husky install",
+    "docs": "node ./scripts/docgen.mjs",
+    "post-build": "npm run docs && npm run build:benchmark",
+    "build:all": "npm run build:node && npm run build:web && npm run build:deno",
+    "build:benchmark": "tsc --project scripts/tsconfig.benchmarks.json && node transformImports.mjs /benchmarks/public/dist",
+    "build:web": "tsc --project scripts/tsconfig.web.json && node transformImports.mjs /__tmp__ && node ./scripts/webBuild.mjs",
+    "build:node": "tsc",
+    "build:deno": "node ./scripts/denoDistDir.mjs && node transformImports.mjs /dist-deno --ts && node cleanSingleLineComments.mjs /dist-deno --ts",
+    "ci": "npm run test:lib && npm run build:node && npm run test:codegen",
+    "pre-commit": "npm run build && git add -A"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/moomoolive/struct-vec.git"
+  },
+  "keywords": [],
+  "author": "Mostafa Elbannan",
+  "license": "MIT",
+  "devDependencies": {
+    "@jest/globals": "^27.5.1",
+    "@luncheon/esbuild-plugin-gzip": "^0.1.0",
+    "@types/jest": "^27.4.0",
+    "@types/jsdoc-to-markdown": "^7.0.3",
+    "esbuild": "^0.14.29",
+    "express": "^4.17.3",
+    "filehound": "^1.17.5",
+    "husky": "^7.0.0",
+    "jest": "^27.5.1",
+    "jsdoc-to-markdown": "^7.1.1",
+    "live-server": "^1.2.1",
+    "nodemon": "^2.0.15",
+    "recursive-copy": "^2.0.14",
+    "ts-jest": "^27.1.3",
+    "ts-node": "^10.5.0",
+    "typescript": "^4.5.5"
+  }
+}
