@@ -86,7 +86,7 @@ describe("casting between vec memory (float64Array) and vec", () => {
     it("should be able to cast vec into float64array", () => {
         const Cats = vec({isCool: "num", isDangerous: "num"})
         const cats = new Cats().fill({isCool: 1, isDangerous: 1})
-        expect(cats.memory).toBeInstanceOf(Float32Array)
+        expect(ArrayBuffer.isView(cats.memory)).toBe(true)
     })
 })
 

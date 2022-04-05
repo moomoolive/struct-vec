@@ -3,9 +3,9 @@
  * @module vec-struct
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Vec = exports.VALID_DATA_TYPES_INTERNAL = exports.BUFFER_TYPE = exports.MEMORY_LAYOUT = void 0;
+exports.Vec = exports.VALID_DATA_TYPES_INTERNAL = exports.MEMORY_LAYOUT = void 0;
 exports.MEMORY_LAYOUT = Float32Array;
-exports.BUFFER_TYPE = SharedArrayBuffer;
+const BUFFER_TYPE = SharedArrayBuffer;
 exports.VALID_DATA_TYPES_INTERNAL = [
     "char",
     "num",
@@ -1310,7 +1310,7 @@ class Vec {
                 * newCapacity);
             const bufferSize = (8 /* encodingBytes */
                 + elementsMemory);
-            const buffer = new exports.BUFFER_TYPE(bufferSize);
+            const buffer = new BUFFER_TYPE(bufferSize);
             const memory = new exports.MEMORY_LAYOUT(buffer);
             memory.set(this._memory);
             this._memory = memory;
@@ -1620,7 +1620,7 @@ class Vec {
                     * newCapacity);
                 const bufferSize = (8 /* encodingBytes */
                     + elementsMemory);
-                const buffer = new exports.BUFFER_TYPE(bufferSize);
+                const buffer = new BUFFER_TYPE(bufferSize);
                 const memory = new exports.MEMORY_LAYOUT(buffer);
                 memory.set(this._memory);
                 this._memory = memory;
@@ -2196,7 +2196,7 @@ function createMemory(elementSize, capacity = 15 /* capacity */) {
         * normalizedCapacity);
     const bufferSize = (elementsMemory
         + 8 /* encodingBytes */);
-    const buffer = new exports.BUFFER_TYPE(bufferSize);
+    const buffer = new BUFFER_TYPE(bufferSize);
     const memory = new exports.MEMORY_LAYOUT(buffer);
     memory[memory.length - 2 /* capacityReverseIndex */] = normalizedCapacity;
     memory[memory.length - 1 /* lengthReverseIndex */] = 0;
@@ -2207,7 +2207,7 @@ function shrinkCapacity(memory, elementSize, newCapacity) {
         * elementSize
         * newCapacity);
     const bufferBytes = elementBytes + 8 /* encodingBytes */;
-    const buffer = new exports.BUFFER_TYPE(bufferBytes);
+    const buffer = new BUFFER_TYPE(bufferBytes);
     const newMemory = new exports.MEMORY_LAYOUT(buffer);
     for (let i = 0; i < memory.length; i += 1) {
         newMemory[i] = memory[i];

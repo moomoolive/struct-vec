@@ -26,7 +26,7 @@ describe("vec generation", () => {
         expect(myPosition.def).toEqual({x: "num", y: "num", z: "num"})
         const memory = myPosition.memory
         expect(ArrayBuffer.isView(memory)).toBe(true)
-        expect(memory).toBeInstanceOf(Float32Array)
+        expect(ArrayBuffer.isView(memory)).toBe(true)
         expect(myPosition.length).toBe(0)
         expect(myPosition.capacity).toBe(1)
     })

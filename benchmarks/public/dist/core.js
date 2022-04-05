@@ -1,5 +1,5 @@
 export const MEMORY_LAYOUT = Float32Array;
-export const BUFFER_TYPE = SharedArrayBuffer;
+const BUFFER_TYPE = SharedArrayBuffer;
 export const VALID_DATA_TYPES_INTERNAL = [
     "char",
     "num",

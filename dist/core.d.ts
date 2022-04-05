@@ -16,7 +16,6 @@ export declare const enum defaults {
     spaceCharacteCodePoint = 32
 }
 export declare const MEMORY_LAYOUT: Float32ArrayConstructor;
-export declare const BUFFER_TYPE: SharedArrayBufferConstructor;
 export declare const VALID_DATA_TYPES_INTERNAL: readonly ["char", "num", "bool"];
 /**
  * The base class that all generated vec

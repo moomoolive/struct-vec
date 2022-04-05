@@ -2,7 +2,7 @@
  * @module vec-struct
  */
 
-export const enum encoding {
+const enum encoding {
     bytesIn32Bits = 4,
     memorySize = 2,
     lengthReverseIndex = 1,
@@ -12,14 +12,14 @@ export const enum encoding {
     encodingBytes = encoding.memorySize * encoding.bytesIn32Bits
 }
 
-export const enum defaults {
+const enum defaults {
     capacity = 15,
     memoryCollectionLimit = 50,
     spaceCharacteCodePoint = 32 // space character (" ") code point
 }
 
-export const MEMORY_LAYOUT = Float32Array
-export const BUFFER_TYPE = SharedArrayBuffer
+const MEMORY_LAYOUT = Float32Array
+const BUFFER_TYPE = SharedArrayBuffer
 
 export const VALID_DATA_TYPES_INTERNAL = [
     "char",
