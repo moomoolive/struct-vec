@@ -4,7 +4,7 @@ import {vec, StructDef} from "../index"
 describe("field name restrictions", () => {
     it("defining struct fields that require bracket indexing should throw error", () => {
         const invalidKeys = (key: string) => {
-            return () => {return vec({[key]: "num"})}
+            return () => {return vec({[key]: "f32"})}
         }
         expect(invalidKeys("bracket-notation-require")).toThrow()
         expect(invalidKeys("@types")).toThrow()
@@ -15,8 +15,8 @@ describe("field name restrictions", () => {
     })
 
     it("defining structs that include field names which conflict with any of the standard methods or properties throws error", () => {
-        expect(() => {vec({e: "num"})}).toThrow()
-        expect(() => {vec({self: "num"})}).toThrow()
+        expect(() => {vec({e: "f32"})}).toThrow()
+        expect(() => {vec({self: "f32"})}).toThrow()
     })
 })
 

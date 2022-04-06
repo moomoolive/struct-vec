@@ -3,7 +3,7 @@ import {vec} from "../index"
 
 describe("higher order iterators", () => {
     it("'forEach' iterator works as expected", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         teams.push({pointsScored: 4, powerRanking: 1, playersOnRoster: 18})
         teams.push({pointsScored: 0, powerRanking: 4, playersOnRoster: 17})
@@ -18,7 +18,7 @@ describe("higher order iterators", () => {
     })
 
     it("'map' iterator works as expected", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         teams.push({pointsScored: 4, powerRanking: 1, playersOnRoster: 18})
         teams.push({pointsScored: 0, powerRanking: 4, playersOnRoster: 17})
@@ -30,7 +30,7 @@ describe("higher order iterators", () => {
     })
 
     it("'mapv' iterator work like 'map' except it returns a vec instead of any array", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         teams.push({pointsScored: 4, powerRanking: 1, playersOnRoster: 18})
         teams.push({pointsScored: 0, powerRanking: 4, playersOnRoster: 17})
@@ -56,7 +56,7 @@ describe("higher order iterators", () => {
     })
 
     it("'filter' iterator works as expected", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         teams.push({pointsScored: 4, powerRanking: 1, playersOnRoster: 18})
         teams.push({pointsScored: 0, powerRanking: 4, playersOnRoster: 17})
@@ -76,7 +76,7 @@ describe("higher order iterators", () => {
     })
 
     it("'find' iterator works as expected", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         teams.push({pointsScored: 4, powerRanking: 1, playersOnRoster: 18})
         teams.push({pointsScored: 0, powerRanking: 4, playersOnRoster: 17})
@@ -91,7 +91,7 @@ describe("higher order iterators", () => {
     })
 
     it("'lastIndexOf' iterator works as expected", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         teams.push({pointsScored: 4, powerRanking: 1, playersOnRoster: 18})
         teams.push({pointsScored: 0, powerRanking: 4, playersOnRoster: 14})
@@ -111,7 +111,7 @@ describe("higher order iterators", () => {
     })
 
     it("'findIndex' iterator works as expected", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         teams.push({pointsScored: 4, powerRanking: 1, playersOnRoster: 18})
         teams.push({pointsScored: 0, powerRanking: 4, playersOnRoster: 17})
@@ -126,7 +126,7 @@ describe("higher order iterators", () => {
     })
 
     it("'reduce' iterator works as expected", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         teams.push({pointsScored: 4, powerRanking: 1, playersOnRoster: 18})
         teams.push({pointsScored: 0, powerRanking: 4, playersOnRoster: 17})
@@ -143,14 +143,14 @@ describe("higher order iterators", () => {
     })
 
     it("'reduce' iterator should throw error with no initial value", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         // @ts-ignore
         expect(() => teams.reduce((total, val) => total + val.powerRanking)).toThrow()
     })
 
     it("'reduceRight' iterator works as expected and iterates the opposite ways as 'reduce' iterator", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         teams.push({pointsScored: 4, powerRanking: 1, playersOnRoster: 18})
         teams.push({pointsScored: 0, powerRanking: 4, playersOnRoster: 17})
@@ -175,14 +175,14 @@ describe("higher order iterators", () => {
     })
 
     it("'reduceRight' iterator should throw error with no initial value", () => {
-        const SportsTeamV = vec({"pointsScored": "num", "powerRanking": "num", "playersOnRoster": "num"}) 
+        const SportsTeamV = vec({"pointsScored": "f32", "powerRanking": "f32", "playersOnRoster": "f32"}) 
         const teams = new SportsTeamV()
         // @ts-ignore
         expect(() => teams.reduceRight((total, val) => total + val.powerRanking)).toThrow()
     })
 
     it("'every' iterator works as expected", () => {
-        const EmployeesV = vec({"salary": "num", "department": "num"})
+        const EmployeesV = vec({"salary": "f32", "department": "f32"})
         const employees = new EmployeesV()
         
         employees.push({salary: 100_000, department: 1})
@@ -194,7 +194,7 @@ describe("higher order iterators", () => {
     })
 
     it("'some' iterator works as expected", () => {
-        const AliensV = vec({"height": "num", "weight": "num", "power": "num"})
+        const AliensV = vec({"height": "f32", "weight": "f32", "power": "f32"})
         const aliens = new AliensV()
 
         aliens.push({height: 8, weight: 200, power: 2})
@@ -211,7 +211,7 @@ describe("higher order iterators", () => {
 
 describe("es6 iterators", () => {
     it("should be able to iterate over vec with 'for...of' syntax", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
 
         const vec1 = new PositionV(5).fill({x: 1, y: 2, z: 3})
         expect(true).toBe(true)
@@ -224,7 +224,7 @@ describe("es6 iterators", () => {
     })
 
     it("'entries' iterator works as expected", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
 
         const vec1 = new PositionV(5).fill({x: 1, y: 2, z: 3})
         expect(true).toBe(true)
@@ -238,7 +238,7 @@ describe("es6 iterators", () => {
     })
 
     it("'values' iterator works as expected", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
 
         const vec1 = new PositionV(5).fill({x: 1, y: 2, z: 3})
         expect(true).toBe(true)
@@ -251,7 +251,7 @@ describe("es6 iterators", () => {
     })
 
     it("'keys' iterator works as expected", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
 
         const vec1 = new PositionV(5).fill({x: 1, y: 2, z: 3})
         expect(true).toBe(true)

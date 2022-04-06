@@ -1,7 +1,11 @@
 import {vec} from "../../dist/index.js"
-import {Benchmark} from "../lib.js"
+import {Benchmark} from "./lib.mjs"
 
-const Position = vec({x: "num", y: "num", z: "num"})
+const Position = vec({
+    x: "i32", 
+    y: "i32", 
+    z: "i32"
+})
 
 const elementCount = 10_000_000
 
@@ -16,31 +20,38 @@ for (let i = 0; i < elementCount; i += 1) {
     positionVec.push({x: 1, y: 1, z: 1})
 }
 
+const tArrayLength = (elementCount * 3)
+
 const benchmark = new Benchmark()
 benchmark
     .add("typed array imperative loop", () => {
-        for (let i = 0; i < (elementCount * 3); i += 3) {
-            rawTypedArray[i] += 10
+        for (let i = 0; i < tArrayLength; i += 3) {
+            rawTypedArray[i + 1] += 10
         }
     })
+    /*
     .add("array iterator", () => {
         positionArr.forEach(e => e.x += 10)
     })
+    */
     .add("array imperative loop", () => {
         for (let i = 0; i < positionArr.length; i += 1) {
-            positionArr[i].x += 10
+            positionArr[i].y += 10
         }
     })
+    /*
     .add("array es6 iterator", () => {
         for (const position of positionArr) {
             position.x += 10
         }
     })
+    */
     .add("vec imperative loop", () => {
         for (let i = 0; i < elementCount; i += 1) {
-            positionVec.index(i).x += 10
+            positionVec.index(i).y += 10
         }
     })
+    /*
     .add("vec iterator", () => {
         positionVec.forEach((e) => e.x += 10)
     })
@@ -49,4 +60,5 @@ benchmark
             position.x += 10
         }
     })
+    */
     .run()

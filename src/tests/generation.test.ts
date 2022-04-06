@@ -3,7 +3,7 @@ import {vec, Vec} from "../index"
 
 describe("vec generation", () => {
     it("should generate a class definition with getters and setter that correspond to inputted keys with standard helper methods", () => {
-        const PositionVec = vec({x: "num", y: "num", z: "num"})
+        const PositionVec = vec({x: "f32", y: "f32", z: "f32"})
         const myPosition = new PositionVec(1)
 
         myPosition.push({x: 1, y: 2, z: 3})
@@ -21,9 +21,9 @@ describe("vec generation", () => {
     })
 
     it("all standard instance properties exist", () => {
-        const PositionVec = vec({x: "num", y: "num", z: "num"})
+        const PositionVec = vec({x: "f32", y: "f32", z: "f32"})
         const myPosition = new PositionVec(1)
-        expect(myPosition.def).toEqual({x: "num", y: "num", z: "num"})
+        expect(myPosition.def).toEqual({x: "f32", y: "f32", z: "f32"})
         const memory = myPosition.memory
         expect(ArrayBuffer.isView(memory)).toBe(true)
         expect(ArrayBuffer.isView(memory)).toBe(true)
@@ -32,7 +32,7 @@ describe("vec generation", () => {
     })
 
     it("array length increments correctly", () => {
-        const PositionVec = vec({x: "num", y: "num", z: "num"})
+        const PositionVec = vec({x: "f32", y: "f32", z: "f32"})
         const myPosition = new PositionVec(1)
 
         expect(myPosition.length).toBe(0)
@@ -43,13 +43,13 @@ describe("vec generation", () => {
     })
 
     it("should be of Vec class", () => {
-        const Position = vec({x: "num", y: "num", z: "num"})
+        const Position = vec({x: "f32", y: "f32", z: "f32"})
         const p = new Position()
         expect(Vec.isVec(p)).toBe(true)
     })
 
     it("array can push multiple values at once", () => {
-        const PositionVec = vec({x: "num", y: "num", z: "num"})
+        const PositionVec = vec({x: "f32", y: "f32", z: "f32"})
         const myPosition = new PositionVec(1)
 
         expect(myPosition.length).toBe(0)
@@ -68,7 +68,7 @@ describe("vec generation", () => {
     })
 
     it("vec can be push on another vec (of same kind) via spread syntax", () => {
-        const PositionVec = vec({x: "num", y: "num", z: "num"})
+        const PositionVec = vec({x: "f32", y: "f32", z: "f32"})
         const myPosition = new PositionVec(1)
 
         expect(myPosition.length).toBe(0)
@@ -95,7 +95,7 @@ describe("vec generation", () => {
     })
 
     it("mutating one element should not mutate any others", () => {
-        const RgbVec = vec({red: "num", blue: "num", green: "num"})
+        const RgbVec = vec({red: "f32", blue: "f32", green: "f32"})
         const rgb = new RgbVec(5)
         
         const newLength = rgb.push({red: 233, blue: 177, green: 0})
@@ -118,19 +118,19 @@ describe("vec generation", () => {
     })
     
     it("to object returns the correct js object repersentation of struct", () => {
-        const QuaternionVec = vec({x: "num", y: "num", z: "num", w: "num"})
+        const QuaternionVec = vec({x: "f32", y: "f32", z: "f32", w: "f32"})
         const q4 = new QuaternionVec()
         q4.push({x: 0, y: 0, z: 200, w: 3})
         expect(q4.index(0).e).toEqual({x: 0, y: 0, z: 200, w: 3})
 
-        const NpcVec = vec({"isCool": "num", "likesYoda": "num"})
+        const NpcVec = vec({"isCool": "f32", "likesYoda": "f32"})
         const npcs = new NpcVec()
         npcs.push({likesYoda: 500, isCool: 1})
         expect(npcs.index(0).e).toEqual({isCool: 1, likesYoda: 500})
     })
 
     it("adding and removing lots of items works", () => {
-        const Vec3V = vec({x: "num", y: "num", z: "num"})
+        const Vec3V = vec({x: "f32", y: "f32", z: "f32"})
         const vec3 = new Vec3V()
         for (let i = 0; i < 2_000; i += 1) {
             expect(vec3.push({x: 1, y: 1, z: 1})).toBe(i + 1)
@@ -143,7 +143,7 @@ describe("vec generation", () => {
     })
 
     it("all properties of an element with the vec can be set at once", () => {
-        const Vec3V = vec({x: "num", y: "num", z: "num"})
+        const Vec3V = vec({x: "f32", y: "f32", z: "f32"})
         const vec3 = new Vec3V()
         vec3.push({x: 1, y: 1, z: 1})
         vec3.push({x: 2, y: 2, z: 1})
@@ -260,7 +260,7 @@ describe("bool data type", () => {
     it("mixing bool and other types generates correct class", () => {
         const BooleanClass = vec({
             testBool: "bool", 
-            x: "num",
+            x: "f32",
             testBool2: "bool",
             cat: "char"
         })
@@ -529,13 +529,13 @@ describe("char data type", () => {
         })
     })
 
-    it("multiple char fields generated correctly", () => {
+    it("multiple char fields generated correctly (with other data types)", () => {
         const charClass = vec({
             char: "char",
             char1: "char",
             char2: "char",
             b: "bool",
-            num: "num"
+            num: "f32"
         })
         const c = new charClass()
         c.push({
@@ -561,9 +561,9 @@ describe("char data type", () => {
     })
 })
 
-describe("num data type", () => {
+describe("f32 data type", () => {
     it("setting num field with incorrect type sets field to NaN", () => {
-        const NumVec = vec({num: "num"})
+        const NumVec = vec({num: "f32"})
         const v = new NumVec()
         v.push({num: 2})
         
@@ -576,5 +576,32 @@ describe("num data type", () => {
         v.index(0).num = undefined
         expect(v.index(0).num).toBe(NaN)
         v.index(0).num = 2
+    })
+
+    it("can be set to decimal number", () => {
+        const NumVec = vec({num: "f32"})
+        const v = new NumVec()
+        v.push({num: 2.1})
+        expect(v.index(0).num).toBe(Math.fround(2.1))
+    })
+})
+
+describe("i32 data type", () => {
+    it("generated correctly", () => {
+        const IntVec = vec({i: "i32"})
+        const v = new IntVec()
+        v.push({i: 4})
+        expect(v.index(0).i).toBe(4)
+        v.index(0).i = 6
+        expect(v.index(0).i).toBe(6)
+    })
+
+    it("cannot be set to decimal", () => {
+        const IntVec = vec({i: "i32"})
+        const v = new IntVec()
+        v.push({i: 4.3})
+        expect(v.index(0).i).toBe(4)
+        v.index(0).i = 6.7
+        expect(v.index(0).i).toBe(6)
     })
 })

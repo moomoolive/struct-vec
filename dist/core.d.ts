@@ -1,22 +1,12 @@
 /**
  * @module vec-struct
  */
-export declare const enum encoding {
-    bytesIn32Bits = 4,
-    memorySize = 2,
-    lengthReverseIndex = 1,
-    capacityReverseIndex = 2,
-    elementSizeJSONReserveIndex = 3,
-    JSONMemorySize = 3,
-    encodingBytes = 8
-}
 export declare const enum defaults {
     capacity = 15,
     memoryCollectionLimit = 50,
     spaceCharacteCodePoint = 32
 }
-export declare const MEMORY_LAYOUT: Float32ArrayConstructor;
-export declare const VALID_DATA_TYPES_INTERNAL: readonly ["char", "num", "bool"];
+export declare const VALID_DATA_TYPES_INTERNAL: readonly ["f32", "i32", "char", "bool"];
 /**
  * The base class that all generated vec
  * classes inherit from.
@@ -57,8 +47,8 @@ export declare class Vec<T extends StructDef> {
     * @example <caption>Basic Usage</caption>
     * ```js
     * import {vec, Vec} from "struct-vec"
-    * const PositionV = vec({x: "num", y: "num", z: "num"})
-    * const CatsV = vec({cuteness: "num", isDangerous: "bool"})
+    * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+    * const CatsV = vec({cuteness: "f32", isDangerous: "bool"})
     *
     * const cats = new CatsV()
     * const positions = new PositionsV()
@@ -98,7 +88,7 @@ export declare class Vec<T extends StructDef> {
      * is always sent by reference when using the ```postMessage```
      * method of ```Worker```s.
      *
-     * @param {ReadonlyFloat32Array} memory memory
+     * @param {ReadonlyInt32Array} memory memory
      * of another Vec of the same kind
      * @returns {Vec<StructDef>} A new vec
      *
@@ -106,7 +96,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * // ------------ index.mjs ---------------
      * import {vec} from "struct-vec"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const positions = new PositionV(10_000).fill(
      *      {x: 1, y: 1, z: 1}
      * )
@@ -117,7 +107,7 @@ export declare class Vec<T extends StructDef> {
      *
      * // ------------ worker.mjs ---------------
      * import {vec} from "struct-vec"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * self.onmessage = (message) => {
      *      PositionV.fromMemory(message.data).forEach((pos) => {
@@ -128,7 +118,7 @@ export declare class Vec<T extends StructDef> {
      * }
      * ```
      */
-    static fromMemory<U extends StructDef>(memory: ReadonlyFloat32Array): Vec<U>;
+    static fromMemory<U extends StructDef>(memory: ReadonlyInt32Array): Vec<U>;
     /**
      * An alternate constructor for vecs.
      * Creates a vec from inputted
@@ -143,7 +133,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec, Vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const arr = new Array(15).fill({x: 1, y: 2, z: 3})
      *
      * const positions = PositionsV.fromArray(arr)
@@ -168,7 +158,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec, Vec} from "struct-vec"
      *
-     * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+     * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
      *
      * const geo = new geoCoordinates(15).fill({
             latitude: 20.10,
@@ -182,7 +172,8 @@ export declare class Vec<T extends StructDef> {
      * ```
      */
     static fromString<U extends StructDef>(vecString: string): Vec<U>;
-    private _memory;
+    private _f32Memory;
+    private _i32Memory;
     private readonly _cursor;
     private _length;
     private _capacity;
@@ -196,14 +187,14 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+     * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
      *
      * // both are valid ways to initialize
      * const withCapacity = new geoCoordinates(100)
      * const without = new geoCoordinates()
      * ```
      */
-    constructor(initialCapacity?: number, memory?: ReadonlyFloat32Array);
+    constructor(initialCapacity?: number, memory?: ReadonlyInt32Array);
     /**
      * The amount of raw memory an individual
      * struct (element of a vec) requires for this vec type.
@@ -243,7 +234,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const Cats = vec({isCool: "num", isDangerous: "num"})
+     * const Cats = vec({isCool: "f32", isDangerous: "f32"})
      * // initialize with a capacity of 15
      * const cats = new Cats(15)
      * // currently the "cats" array can hold
@@ -271,7 +262,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const Cats = vec({isCool: "num", isDangerous: "num"})
+     * const Cats = vec({isCool: "f32", isDangerous: "f32"})
      * // initialize with a capacity of 15
      * const cats = new Cats(15)
      * // currently the "cats" array can hold
@@ -306,10 +297,10 @@ export declare class Vec<T extends StructDef> {
      * to manually edit the underlying memory,
      * doing so may lead to memory corruption.
      *
-     * @type {ReadonlyFloat32Array}
+     * @type {ReadonlyInt32Array}
      */
-    get memory(): ReadonlyFloat32Array;
-    set memory(newMemory: ReadonlyFloat32Array);
+    get memory(): ReadonlyInt32Array;
+    set memory(newMemory: ReadonlyInt32Array);
     /**
      * Returns a cursor which allows the viewing of
      * the element at the inputted index.
@@ -329,7 +320,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * const pos = new PositionsV()
      *
@@ -376,7 +367,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * const pos = new PositionsV()
      *
@@ -413,7 +404,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
      *
      * pos.forEach((p, i, v) => {
@@ -445,7 +436,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
      * const xVals = pos.map(p => p.x)
      *
@@ -482,7 +473,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
      * const yAdd = pos.mapv(p => p.y += 2)
      *
@@ -516,7 +507,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -555,7 +546,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -593,7 +584,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -632,7 +623,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -682,7 +673,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -724,7 +715,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -755,7 +746,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -792,7 +783,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -824,7 +815,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -854,7 +845,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -883,7 +874,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -930,7 +921,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 2, z: 10})
      *
      * const posCopy = pos.slice()
@@ -969,7 +960,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1008,7 +999,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * // initialize with space for 15 elements
      * const p = new PositionV(15)
@@ -1031,7 +1022,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1063,7 +1054,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * const pos = new PositionsV(3).fill({x: 1, y: 1, z: 1})
      * const pos1 = new PositionsV(2).fill({x: 2, y: 1, z: 1})
@@ -1098,7 +1089,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1137,7 +1128,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1167,7 +1158,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(15).fill({x: 1, y: 1, z: 1})
      * console.log(p.length) // output: 15
      *
@@ -1190,7 +1181,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1250,7 +1241,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1270,7 +1261,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1294,7 +1285,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1325,7 +1316,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1359,7 +1350,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 233, y: 31, z: 99})
         p.push({x: 122, y: 23, z: 8})
@@ -1398,7 +1389,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * // initialize with space for 15 elements
      * const p = new PositionV(15)
@@ -1437,7 +1428,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1468,7 +1459,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1509,7 +1500,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1544,7 +1535,7 @@ export declare class Vec<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20).fill({x: 1, y: 1, z: 1})
      *
      * console.log(p.length) // output: 20
@@ -1564,12 +1555,17 @@ export declare class Vec<T extends StructDef> {
      * ```
      */
     toJSON(): string;
+    private createMemory;
+    private shrinkCapacity;
+    private deallocateExcessMemory;
+    private replaceMemory;
 }
-export declare type VecPrimitive = "num" | "bool" | "char";
-export declare type Num<T extends VecPrimitive> = T extends "num" ? number : never;
-export declare type Bool<T extends VecPrimitive> = T extends "bool" ? boolean : never;
-export declare type Char<T extends VecPrimitive> = T extends "char" ? string : never;
-export declare type Primitive<T extends VecPrimitive> = (Num<T> | Bool<T> | Char<T>);
+export declare type VecPrimitive = ("f32" | "i32" | "bool" | "char");
+export declare type f32<T extends VecPrimitive> = T extends "f32" ? number : never;
+export declare type i32<T extends VecPrimitive> = T extends "i32" ? number : never;
+export declare type bool<T extends VecPrimitive> = T extends "bool" ? boolean : never;
+export declare type char<T extends VecPrimitive> = T extends "char" ? string : never;
+export declare type Primitive<T extends VecPrimitive> = (f32<T> | i32<T> | bool<T> | char<T>);
 export declare type StructDef = Readonly<{
     [key: string]: VecPrimitive;
 }>;
@@ -1577,7 +1573,7 @@ export declare type Struct<S extends StructDef> = {
     [key in keyof S]: Primitive<S[key]>;
 };
 declare type TypedArrayMutableProperties = ('copyWithin' | 'fill' | 'reverse' | 'set' | 'sort');
-export interface ReadonlyFloat32Array extends Omit<Float32Array, TypedArrayMutableProperties> {
+export interface ReadonlyInt32Array extends Omit<Int32Array, TypedArrayMutableProperties> {
     readonly [n: number]: number;
 }
 export declare type VecCursor<T extends StructDef> = (Struct<T> & {

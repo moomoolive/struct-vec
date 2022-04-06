@@ -26,10 +26,10 @@ Object.defineProperty(exports, "Vec", { enumerable: true, get: function () { ret
  * console.log(validateStructDef(true)) // output: false
  * console.log(validateStructDef("def")) // output: false
  * console.log(validateStructDef({x: "randomType"})) // output: false
- * console.log(validateStructDef({x: {y: "num"}})) // output: false
+ * console.log(validateStructDef({x: {y: "f32"}})) // output: false
  *
- * console.log(validateStructDef({x: "num"})) // output: true
- * console.log(validateStructDef({code: "num"})) // output: true
+ * console.log(validateStructDef({x: "f32"})) // output: true
+ * console.log(validateStructDef({code: "f32"})) // output: true
  * ```
  */
 function validateStructDef(def) {
@@ -73,11 +73,11 @@ exports.validateStructDef = validateStructDef;
  * import {vec} from "struct-vec"
  *
  * // create Vec definition
- * const PositionV = vec({x: "num", y: "num", z: "num"})
+ * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
  * // now initialize like a normal class
  * const p = new PositionV()
  *
- * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+ * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
  * const geo = new geoCoordinates(15).fill({latitude: 1, longitude: 1})
  *
  * // invalid struct defs throws error
@@ -156,7 +156,7 @@ exports.vec = vec;
  * const LIB_PATH = "struct-vec"
  *
  * // create Vec definition
- * const def = {x: "num", y: "num", z: "num"}
+ * const def = {x: "f32", y: "f32", z: "f32"}
  * const GeneratedClass = vecCompile(def, LIB_PATH, {
  *      // create a typescript class
  *      lang: "ts",

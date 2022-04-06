@@ -9,7 +9,7 @@ const __dirname = dirname(__filename)
 
 const LIB_PATH = "../dist"
 
-export const structdef = {x: "bool", y: "num", z: "char"}
+export const structdef = {x: "bool", y: "f32", z: "char"}
 
 const namedJs = vecCompile(
     structdef,
