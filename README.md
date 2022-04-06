@@ -64,7 +64,9 @@ This package attempts to solve this problem by allowing you to define data struc
 
 ### Quick Start
 
-`npm i struct-vec`
+```
+npm i struct-vec
+```
 
 ```js
 import {vec} from "struct-vec"
