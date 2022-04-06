@@ -199,10 +199,10 @@ export declare class Vec<T extends StructDef> {
      * The amount of raw memory an individual
      * struct (element of a vec) requires for this vec type.
      * An individual block of memory corresponds to
-     * 8 bytes (64-bits).
+     * 4 bytes (32-bits).
      *
      * For example if ```elementSize``` is 2, each struct
-     * will take 16 bytes.
+     * will take 8 bytes.
      *
      * @type {number}
      */
@@ -218,7 +218,8 @@ export declare class Vec<T extends StructDef> {
     private get cursor();
     /**
      * The number of elements in vec.
-     * The value is between 0 and 2^24 (about 16 million),
+     * The value is between 0 and (2^32) - 1
+     * (about 2 billion),
      * always numerically greater than the
      * highest index in the array.
      *
@@ -228,7 +229,8 @@ export declare class Vec<T extends StructDef> {
     /**
      * The number of elements a vec can
      * hold before needing to resize.
-     * The value is between 0 and 2^24 (about 16 million).
+     * The value is between 0 and (2^32) - 1
+     * (about 2 billion).
      *
      * @example <caption>Expanding Capacity</caption>
      * ```js
