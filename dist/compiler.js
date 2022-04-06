@@ -11,7 +11,8 @@ function validVariableName(candidate) {
 }
 function validType(type) {
     switch (type) {
-        case "num":
+        case "f32":
+        case "i32":
         case "bool":
         case "char":
             return true;
@@ -31,10 +32,10 @@ function restrictedFieldName(name) {
             return false;
     }
 }
-const MAX_USABLE_BITS_IN_F32 = 24;
+const BITS_IN_I32 = 32;
 function tokenizeStructDef(def) {
     if (typeof def !== "object" || def === null || Array.isArray(def)) {
-        throw SyntaxError(`${exports.ERR_PREFIX} inputted invalid struct def. Expected object in the form of '{"field1": "num", "field2": "char", "field3": "bool"}' got ${JSON.stringify(def)}`);
+        throw SyntaxError(`${exports.ERR_PREFIX} inputted invalid struct def. Expected object in the form of '{"field1": "f32", "field2": "char", "field3": "bool"}' got ${JSON.stringify(def)}`);
     }
     const fieldDefs = Object.keys(def).map((key) => {
         return { field: key, type: def[key] };
@@ -46,11 +47,13 @@ function tokenizeStructDef(def) {
     const tokens = {
         elementSize: 0,
         fieldNames: [],
-        numberFields: [],
+        float32Fields: [],
+        int32Fields: [],
         booleanFields: [],
         charFields: []
     };
-    const numberTypes = [];
+    const float32Types = [];
+    const int32Types = [];
     const boolTypes = [];
     const charTypes = [];
     for (let i = 0; i < fieldDefs.length; i += 1) {
@@ -67,21 +70,36 @@ function tokenizeStructDef(def) {
         else if (!validType(type)) {
             throw SyntaxError(`${exports.ERR_PREFIX} field "${field}" is not a valid type (got type "${type}"). Struct definition fields can only be of type of ${core_1.VALID_DATA_TYPES_INTERNAL.join(", ")}`);
         }
-        if (type === "num") {
-            numberTypes.push(field);
-        }
-        else if (type === "bool") {
-            boolTypes.push(field);
-        }
-        else if (type === "char") {
-            charTypes.push(field);
+        switch (type) {
+            case "f32":
+                float32Types.push(field);
+                break;
+            case "i32":
+                int32Types.push(field);
+                break;
+            case "bool":
+                boolTypes.push(field);
+                break;
+            case "char":
+                charTypes.push(field);
+                break;
         }
     }
-    numberTypes.sort();
-    for (let i = 0; i < numberTypes.length; i += 1) {
-        const field = numberTypes[i];
+    float32Types.sort();
+    for (let i = 0; i < float32Types.length; i += 1) {
+        const field = float32Types[i];
         tokens.fieldNames.push(field);
-        tokens.numberFields.push({
+        tokens.float32Fields.push({
+            field,
+            offset: elementSize
+        });
+        elementSize += 1;
+    }
+    int32Types.sort();
+    for (let i = 0; i < int32Types.length; i += 1) {
+        const field = int32Types[i];
+        tokens.fieldNames.push(field);
+        tokens.int32Fields.push({
             field,
             offset: elementSize
         });
@@ -101,9 +119,9 @@ function tokenizeStructDef(def) {
     let start = 0;
     while (start < boolTypes.length) {
         const boolsLeft = boolTypes.length - start;
-        const end = boolsLeft < MAX_USABLE_BITS_IN_F32
+        const end = boolsLeft < BITS_IN_I32
             ? boolsLeft
-            : MAX_USABLE_BITS_IN_F32;
+            : BITS_IN_I32;
         for (let i = start; i < start + end; i += 1) {
             const field = boolTypes[i];
             tokens.fieldNames.push(field);
@@ -114,7 +132,7 @@ function tokenizeStructDef(def) {
             });
         }
         elementSize += 1;
-        start += MAX_USABLE_BITS_IN_F32;
+        start += BITS_IN_I32;
     }
     tokens.elementSize = elementSize;
     return tokens;
@@ -202,14 +220,19 @@ function validateCompileOptions(input) {
 }
 exports.validateCompileOptions = validateCompileOptions;
 function createVecDef(tokens, structDef, { lang, pathToLib, className, exportSyntax, runtimeCompile }) {
-    const { elementSize, fieldNames, numberFields, booleanFields, charFields } = tokens;
+    const { elementSize, fieldNames, float32Fields, booleanFields, charFields, int32Fields } = tokens;
     const def = JSON.stringify(structDef);
     const ts = lang === "ts";
     const generic = `<${def}>`;
     const libPath = `"${pathToLib}"`;
     const importStatement = `import {Vec${ts ? ", StructDef, Struct, CursorConstructor" : ""}} from ${libPath}`;
     const CursorConstructor = "CursorConstructor" + generic;
-    const memory = ts ? "(this.self as unknown as {_memory: Float64Array})._memory" : "this.self._memory";
+    const memory = ts ?
+        "(this.self as unknown as {_f32Memory: Float32Array})._f32Memory"
+        : "this.self._f32Memory";
+    const intMemory = ts ?
+        "(this.self as unknown as {_i32Memory: Int32Array})._i32Memory"
+        : "this.self._i32Memory";
     return {
         className,
         def: `
@@ -223,7 +246,7 @@ ${exportSyntax === "named" ? "export " : ""}class ${className} extends Vec${ts ?
     ${ts ? "protected " : ""}static Cursor = class Cursor {
         _viewingIndex = 0${ts ? "\n\t\tself: Vec" + generic : ""}
         constructor(self${ts ? ": Vec" + generic : ""}) { this.self = self }
-        ${numberFields.map(({ field, offset }) => {
+        ${float32Fields.map(({ field, offset }) => {
             const fieldOffset = offset < 1 ? "" : (" + " + offset.toString());
             const base = `${memory}[this._viewingIndex${fieldOffset}]`;
             const type = ts ? ": number" : "";
@@ -231,9 +254,17 @@ ${exportSyntax === "named" ? "export " : ""}class ${className} extends Vec${ts ?
             const setter = `set ${field}(newValue${type}) { ${base} = newValue }`;
             return `${getter}; ${setter};`;
         }).join("\n\t    ")}
+        ${int32Fields.map(({ field, offset }) => {
+            const fieldOffset = offset < 1 ? "" : (" + " + offset.toString());
+            const base = `${intMemory}[this._viewingIndex${fieldOffset}]`;
+            const type = ts ? ": number" : "";
+            const getter = `get ${field}()${type} { return ${base} }`;
+            const setter = `set ${field}(newValue${type}) { ${base} = newValue }`;
+            return `${getter}; ${setter};`;
+        }).join("\n\t    ")}
         ${charFields.map(({ field, offset }) => {
             const fieldOffset = offset < 1 ? "" : (" + " + offset.toString());
-            const base = `${memory}[this._viewingIndex${fieldOffset}]`;
+            const base = `${intMemory}[this._viewingIndex${fieldOffset}]`;
             const type = ts ? ": string" : "";
             const getter = `get ${field}()${type} { return String.fromCodePoint(${base} || ${32 /* spaceCharacteCodePoint */}) }`;
             const setter = `set ${field}(newValue${type}) { ${base} = newValue.codePointAt(0) || ${32 /* spaceCharacteCodePoint */} }`;
@@ -245,7 +276,7 @@ ${exportSyntax === "named" ? "export " : ""}class ${className} extends Vec${ts ?
             const reverseMask = ~mask;
             const type = ts ? ": boolean" : "";
             const boolCast = ts ? "(Boolean(newValue) as unknown as number)" : "Boolean(newValue)";
-            const base = `${memory}[this._viewingIndex${fieldOffset}]`;
+            const base = `${intMemory}[this._viewingIndex${fieldOffset}]`;
             const getter = `get ${field}()${type} { return Boolean(${base} & ${mask}) }`;
             const setter = `set ${field}(newValue${type}) { ${base} &= ${reverseMask};${base} |= ${boolCast}${byteOffset < 1 ? "" : " << " + byteOffset.toString()}}`;
             return `${getter}; ${setter};`;

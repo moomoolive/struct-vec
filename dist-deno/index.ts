@@ -1,10 +1,17 @@
 /**
  * @module vec-struct
  */
-import {Vec as BaseVec, StructDef, Struct, ReadonlyFloat32Array} from "./core.ts"
+import {Vec as BaseVec} from "./core.ts"
+import type {StructDef, Struct, ReadonlyInt32Array} from "./core.ts"
 import {tokenizeStructDef, ERR_PREFIX, createVecDef, validateCompileOptions} from "./compiler.ts"
 export {Vec} from "./core.ts"
-export type {CursorConstructor, VecCursor, Primitive, Bool, Char,  Num, VecPrimitive, ReadonlyFloat32Array, Struct, StructDef, SortCompareCallback, MapCallback, MapvCallback, ForEachCallback, ReduceCallback, TruthyIterCallback} from "./core.ts"
+export type {CursorConstructor, VecCursor, ReadonlyInt32Array, } from "./core.ts"
+export type {SortCompareCallback, MapCallback} from "./core.ts"
+export type {ForEachCallback, ReduceCallback} from "./core.ts"
+export type {MapvCallback, TruthyIterCallback} from "./core.ts"
+export type {i32, f32, char, bool} from "./core.ts"
+export type {VecPrimitive, Primitive} from "./core.ts"
+export type {Struct, StructDef,} from "./core.ts"
 /**
  * A helper function to validate an inputted struct
  * definition. If inputted struct def is valid
@@ -22,10 +29,10 @@ export type {CursorConstructor, VecCursor, Primitive, Bool, Char,  Num, VecPrimi
  * console.log(validateStructDef(true)) 
  * console.log(validateStructDef("def")) 
  * console.log(validateStructDef({x: "randomType"})) 
- * console.log(validateStructDef({x: {y: "num"}})) 
+ * console.log(validateStructDef({x: {y: "f32"}})) 
  * 
- * console.log(validateStructDef({x: "num"})) 
- * console.log(validateStructDef({code: "num"})) 
+ * console.log(validateStructDef({x: "f32"})) 
+ * console.log(validateStructDef({code: "f32"})) 
  * ```
  */
 export function validateStructDef(def: any): boolean {
@@ -67,11 +74,11 @@ export function validateStructDef(def: any): boolean {
  * import {vec} from "struct-vec.ts"
  * 
  * 
- * const PositionV = vec({x: "num", y: "num", z: "num"})
+ * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
  * 
  * const p = new PositionV()
  * 
- * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+ * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
  * const geo = new geoCoordinates(15).fill({latitude: 1, longitude: 1})
  * 
  * 
@@ -151,7 +158,7 @@ export function vec<S extends StructDef>(
  * const LIB_PATH = "struct-vec"
  * 
  * 
- * const def = {x: "num", y: "num", z: "num"}
+ * const def = {x: "f32", y: "f32", z: "f32"}
  * const GeneratedClass = vecCompile(def, LIB_PATH, {
  *      
  *      lang: "ts",
@@ -213,8 +220,8 @@ export interface VecClass<T extends StructDef> {
      * @example <caption>Basic Usage</caption>
      * ```js
      * import {vec, Vec} from "struct-vec.ts"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
-     * const CatsV = vec({cuteness: "num", isDangerous: "bool"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+     * const CatsV = vec({cuteness: "f32", isDangerous: "bool"})
      * 
      * const cats = new CatsV()
      * const positions = new PositionsV()
@@ -246,7 +253,7 @@ export interface VecClass<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec.ts"
      * 
-     * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+     * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
      * 
      * 
      * const withCapacity = new geoCoordinates(100)
@@ -280,7 +287,7 @@ export interface VecClass<T extends StructDef> {
      * ```js
      * 
      * import {vec} from "struct-vec.ts"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const positions = new PositionV(10_000).fill(
      *      {x: 1, y: 1, z: 1}
      * )
@@ -291,7 +298,7 @@ export interface VecClass<T extends StructDef> {
      * 
      * 
      * import {vec} from "struct-vec.ts" 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * 
      * self.onmessage = (message) => {
      *      PositionV.fromMemory(message.data).forEach((pos) => {
@@ -302,7 +309,7 @@ export interface VecClass<T extends StructDef> {
      * }
      * ```
      */
-    fromMemory(memory: ReadonlyFloat32Array): BaseVec<T>
+    fromMemory(memory: ReadonlyInt32Array): BaseVec<T>
     /**
      * An alternate constructor for vecs.
      * Creates a vec from inputted
@@ -317,7 +324,7 @@ export interface VecClass<T extends StructDef> {
      * ```js
      * import {vec, Vec} from "struct-vec.ts"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const arr = new Array(15).fill({x: 1, y: 2, z: 3})
      * 
      * const positions = PositionsV.fromArray(arr)
@@ -342,7 +349,7 @@ export interface VecClass<T extends StructDef> {
      * ```js
      * import {vec, Vec} from "struct-vec.ts"
      * 
-     * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+     * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
      * 
      * const geo = new geoCoordinates(15).fill({
             latitude: 20.10,

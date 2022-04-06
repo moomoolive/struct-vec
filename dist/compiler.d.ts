@@ -3,7 +3,11 @@ export declare const ERR_PREFIX = "[VecGenerator]";
 declare type StructDefToken = {
     elementSize: number;
     fieldNames: string[];
-    numberFields: {
+    float32Fields: {
+        field: string;
+        offset: number;
+    }[];
+    int32Fields: {
         field: string;
         offset: number;
     }[];

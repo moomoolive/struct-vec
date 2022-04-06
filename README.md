@@ -29,6 +29,10 @@ This package attempts to solve this problem by allowing you to define data struc
   - [Creating a Struct Definition](#creating-a-struct-definition)
   - [Default Struct Fields](#default-struct-fields)
   - [Supported Data Types](#data-types)
+    - [f32](#f32)
+    - [i32](#i32)
+    - [bool](#bool)
+    - [char](#char)
   - [Disallowed Field Names](#disallowed-field-names)
 - [Compilers](#compilers)
   - [Runtime Compiler](#runtime-compiler)
@@ -63,10 +67,9 @@ This package attempts to solve this problem by allowing you to define data struc
 ```js
 import {vec} from "struct-vec"
 
-// define what an element should look like
-const def = {x: "num", y: "num", z: "num"}
-// returns a class
-const PositionV = vec(def)
+// define the typing of elements in
+// vec. Returns a class
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 
 // initialize a vec
 const positions = new PositionV()
@@ -110,8 +113,7 @@ import {vec} from "struct-vec"
 
 // define what an element should look like 
 // definitions are called "struct defs" 
-const def = {x: "num", y: "num", z: "num"}
-const PositionV = vec(def)
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 
 // you can initialize your vecs without any arguments
 const noArg = new PositionV()
@@ -123,7 +125,6 @@ console.log(withCapacity.capacity) // output: 15_000
 
 // Or you can construct a vec from another vec's memory
 const fromMemory = PositionV.fromMemory(withCapacity.memory)
-console.log(fromMemory.memory === withCapacity.memory) // output: true
 console.log(fromMemory.capacity) // output: 15_000
 ```
 
@@ -140,7 +141,7 @@ If you want the value of an element, refer to one of it's fields (`yourElement.x
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 positions.push({x: 1, y: 2, z: 3})
@@ -170,7 +171,7 @@ If you want to set the value of an element, refer to one of it's fields (`yourEl
 import {vec} from "struct-vec"
 
 const Cats = vec({
-     cuteness: "num",
+     cuteness: "i32",
      isDangerous: "bool", 
      emoji: "char"
 })
@@ -206,7 +207,7 @@ cats.index(0).emoji = "😸"
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 for (let i = 0; i < 100_000; i++) {
@@ -226,7 +227,7 @@ console.log(positions.length) // output: 100_000
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 const positions = new PositionV(5_560).fill({x: 4, y: 3, z: 2})
@@ -247,7 +248,7 @@ Vecs support the majority of iterators that are found on javascript arrays. Chec
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 const positions = new PositionV(5_560).fill({x: 4, y: 3, z: 2})
@@ -275,7 +276,7 @@ for (const element of positions) {
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 positions.push({x: 1, y: 1, z: 1})
@@ -289,7 +290,7 @@ console.log(positions.length) // output: 0
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 positions.push({x: 1, y: 1, z: 1})
@@ -304,7 +305,7 @@ console.log(positions.length) // output: 1
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 positions.push({x: 1, y: 1, z: 1})
@@ -322,7 +323,7 @@ Due to how [vecs work internally](#indexing-does-not-return-element), swapping c
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 positions.push({x: 1, y: 1, z: 1})
@@ -346,12 +347,12 @@ positions.index(1).e = correctTmp
 
 #### Array
 
-*Note: [Vecs use 32-bit floats](#num), so there will be a loss of precision for decimal numbers when converting an array to a vec.
+*Note: [Vecs use 32-bit floats](#f32), so there will be a loss of precision for decimal numbers when converting an array to a vec.
 
 ```js
 import {vec, Vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(15).fill({x: 1, y: 2, z: 3})
 
 // cast to array
@@ -375,7 +376,7 @@ console.log(pFromArray !== p) // output: true
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(20).fill({x: 1, y: 1, z: 1})
 
 // cast to string
@@ -401,7 +402,7 @@ Multithreading with vecs is as easy as this:
 ```js
 import {vec} from "struct-vec"
 
-const Position = vec({x: "num", y: "num", z: "num"})
+const Position = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new Position(10_000).fill(
     {x: 1, y: 1, z: 1}
 )
@@ -416,7 +417,7 @@ worker.postMessage(positions.memory)
 ```js
 import {vec} from "struct-vec" 
 
-const Position = vec({x: "num", y: "num", z: "num"})
+const Position = vec({x: "f32", y: "f32", z: "f32"})
 
 self.onmessage = ({data}) => {
    Position.fromMemory(data).forEach(p => {
@@ -453,16 +454,16 @@ All elements in a vec are structs, which can be thought of as strictly-typed obj
 Creating a struct def is similar to defining a struct def in statically-typed languages (C, Rust, Go, etc.) or an [interface in Typescript](https://www.typescriptlang.org/docs/handbook/2/objects.html). Define a struct def by creating an object and mapping fields ([with a valid name](#disallowed-field-names)) to [supported data types](#data-types). Nesting of struct defs is NOT allowed.
 
 ```js
-// should have number type at "x", "y", and "z" fields
-const positionDef = {x: "num", y: "num", z: "num"}
+// should have floats at "x", "y", and "z" fields
+const positionDef = {x: "f32", y: "f32", z: "f32"}
 
 // should have character type at "emoji" field, and
-// number type at "cuteness" field
-const catDef = {emoji: "char", cuteness: "num"}
+// integer type at "cuteness" field
+const catDef = {emoji: "char", cuteness: "i32"}
 
 // should have boolean type at "isScary" and
-// number type at "power" field
-const monsterDef = {isScary: "bool", power: "num"}
+// integer type at "power" field
+const monsterDef = {isScary: "bool", power: "i32"}
 ```
 
 ### Default Struct Fields
@@ -474,7 +475,7 @@ Every struct, regardless of definition has some auto-generated fields. Auto-gene
 import {vec} from "struct-vec"
 
 const Cats = vec({
-     cuteness: "num",
+     cuteness: "i32",
      isDangerous: "bool", 
      emoji: "char"
 })
@@ -498,32 +499,62 @@ console.log(cats.index(0).e) // output: {cuteness: 2_876, isDangerous: true, emo
 ```
 
 ### Data types
-#### num
+#### f32
 
-Single-precision floating point number, takes 4 bytes (32 bits) of memory. Same as javascript's `Number` type, but with less precision.
+[Single-precision floating point number](https://en.wikipedia.org/wiki/Single-precision_floating-point_format), takes 4 bytes (32 bits) of memory. Similar to javascript's `Number` type, but with less precision. Also similar to to C's [`float` type](https://www.learnc.net/c-tutorial/c-float/).
 
-To define a `num` field:
+To define a `f32` field:
 ```js
 import {vec} from "struct-vec"
 
-// "num" should be number type
-const def = {num: "num"}
-const NumVec = vec(def)
+// "num" should be a float type
+const NumVec = vec({num: "f32"})
+const v = new NumVec()
+
+v.push({num: 1.1})
+console.log(v.index(0).num) // output: 1.100000023841858
+v.index(0).num = 2.1
+// notice the loss of precision
+console.log(v.index(0).num) // output: 2.0999999046325684
+```
+
+[![access-speed-num](https://img.shields.io/badge/%F0%9F%9A%80%20Access%20Speed-Great-brightgreen)](https://shields.io/)
+
+This data type very fast in terms of access speed as it maps exactly to a native javascript type.  
+
+[![type-safety-num](https://img.shields.io/badge/%F0%9F%AA%B2%20Type%20Saftey-info-blue)](https://shields.io/) 
+
+If one sets a `f32` field with an incorrect type (`String` type for example), the field will be set to `NaN`. There a couple of exceptions to this rule, such as if the incorrect type is `null`, an `Array`, a `BigInt`, a `Symbol`, or a `Boolean` which will either throw a runtime error, set the field to 0 or 1, depending on the type and javascript engine.
+
+#### i32
+
+A [32-bit signed integer](https://www.ibm.com/docs/en/aix/7.2?topic=types-signed-unsigned-integers), takes 4 bytes (32 bits) of memory. Similar to javascript's `Number` type, but without the ability to carry decimals. [`int` type](https://www.learnc.net/c-tutorial/c-integer/).
+
+To define a `i32` field:
+```js
+import {vec} from "struct-vec"
+
+// "num" should be a integer type
+const NumVec = vec({num: "i32"})
 const v = new NumVec()
 
 v.push({num: 1})
 console.log(v.index(0).num) // output: 1
 v.index(0).num = 2
 console.log(v.index(0).num) // output: 2
+v.index(0).num = 2.2
+// notice that i32s cannot hold decimals
+console.log(v.index(0).num) // output: 2
 ```
 
 [![access-speed-num](https://img.shields.io/badge/%F0%9F%9A%80%20Access%20Speed-Great-brightgreen)](https://shields.io/)
 
-This data type is the fastest in terms of access speed as it maps exactly to a native javascript type.  
+This data type very fast in terms of access speed as it maps exactly to a native javascript type.  
 
 [![type-safety-num](https://img.shields.io/badge/%F0%9F%AA%B2%20Type%20Saftey-info-blue)](https://shields.io/) 
 
-If one sets a `num` field with an incorrect type (`String` type for example), the field will be set to `NaN`. There a couple of exceptions to this rule, such as if the incorrect type is `null`, an `Array`, a `BigInt`, a `Symbol`, or a `Boolean` which will either throw a runtime error, set the field to 0 or 1, depending on the type and javascript engine.
+If one sets a `i32` field with an incorrect type (`String` type for example), the field will be set to `NaN`. There a couple of exceptions to this rule, such as if the incorrect type is `null`, an `Array`, a `BigInt`, a `Symbol`, or a `Boolean` which will either throw a runtime error, set the field to 0 or 1, depending on the type and javascript engine.
+
 
 #### bool
 
@@ -559,7 +590,7 @@ To define a `char` field:
 ```js
 import {vec} from "struct-vec"
 
-// "char" should be char type
+// "char" should be character type
 const CharVec = vec({char: "char"})
 const v = new CharVec()
 v.push({char: "😀"})
@@ -570,7 +601,7 @@ console.log(v.index(0).char) // output: "a"
 
 [![access-speed-char](https://img.shields.io/badge/%F0%9F%9A%80%20Access%20Speed-Bad-yellow)](https://shields.io/)
 
-This data type requires a medium level conversion in order to access. Performance varies wildly between different javascript environments, but you can expect access times for `char` types to be up to 100% slower (2x slower) than the `num` type.
+This data type requires a medium level conversion in order to access. Performance varies wildly between different javascript environments, but you can expect access times for `char` types to be up to 100% slower (2x slower) than the `i32` (or `f32`) type.
 
 [![type-safety-char](https://img.shields.io/badge/%F0%9F%AA%B2%20Type%20Saftey-info-blue)](https://shields.io/)
 
@@ -592,18 +623,18 @@ import {vec} from "struct-vec"
 
 // 🛑 Not allowed
 const v0 = vec({_viewingIndex: "char"})
-const v1 = vec({self: "num"})
-const v5 = vec({e: "num"})
+const v1 = vec({self: "f32"})
+const v5 = vec({e: "f32"})
 const v2 = vec({["my-field"]: "bool"})
 const v3 = vec({["👍"]: "char"})
-const v4 = vec({0: "num"})
+const v4 = vec({0: "f32"})
 
 // ✅ allowed
-const v11 = vec({x: "num", y: "num", z: "num"})
+const v11 = vec({x: "f32", y: "f32", z: "f32"})
 const v6 = vec({$field: "bool"})
 const v7 = vec({_field: "char"})
-const v8 = vec({e0: "num"})
-const v9 = vec({myCoolField: "num"})
+const v8 = vec({e0: "f32"})
+const v9 = vec({myCoolField: "f32"})
 const v10 = vec({my$_crazy0_fieldName123: "bool"})
 ```
 
@@ -620,7 +651,7 @@ Generally, the runtime compiler is easier to work with and that's why all the do
 In case your were wondering, the runtime compiler is quite fast. Defining a vec like so:
 
 ```js
-const v = vec({x: "num", y: "num", z: "num", w: "num"})
+const v = vec({x: "f32", y: "f32", z: "f32", w: "f32"})
 ```
 
 takes about `0.013` milliseconds in Node. Unless you are planning on defining tens of thousands of vecs, the runtime compiler won't really slow down your application.
@@ -649,7 +680,7 @@ const LIB_PATH = "struct-vec"
 
 // create a struct def, just like with the
 // runtime compiler
-const def = {x: "bool", y: "num", z: "char"}
+const def = {x: "bool", y: "f32", z: "char"}
 
 const MyClass = vecCompile(def, LIB_PATH, {
      // generate a javascript class, not typescript
@@ -671,7 +702,7 @@ now take a look at the file the class was written to:
 // imported dependencies from LIB_PATH
 import {Vec} from "struct-vec"
 /**
- * @extends {Vec<{"x":"bool","y":"num","z":"char"}>}
+ * @extends {Vec<{"x":"bool","y":"f32","z":"char"}>}
  */
 // class was named correctly
 // and it was created as a "named" export
@@ -689,7 +720,7 @@ export class MyClass extends Vec {
     }
     get elementSize() { return 3 }
     // here's the inputted struct def
-    get def() { return {"x":"bool","y":"num","z":"char"} }
+    get def() { return {"x":"bool","y":"f32","z":"char"} }
     get cursorDef() { return MyClass.Cursor }
 }
 ```
@@ -714,7 +745,7 @@ Generally this is a non-issue, but it can cause bugs in situations like these:
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 positions.push({x: 1, y: 1, z: 1})
@@ -748,7 +779,7 @@ or if attempting to swap elements:
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 positions.push({x: 1, y: 1, z: 1})
@@ -773,7 +804,7 @@ or when attempt to do nested imperative for loops (vec iterators don't have this
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 positions.push({x: 1, y: 1, z: 1})
@@ -815,7 +846,7 @@ Individual elements of a vec are behave like [primitive types](https://developer
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 positions.push({x: 1, y: 1, z: 1})
@@ -845,7 +876,7 @@ Indexing out of bounds negatively (`i < 0`) will return `undefined` just like an
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV(5)
 
 positions.push({x: 1, y: 1, z: 1})
@@ -884,7 +915,7 @@ Before pushing many elements at once you can use the `reserve` method to resize 
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 // make sure there is enough memory for an additional
@@ -905,7 +936,7 @@ If you want to remove the last n elements use the `truncate` method
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV(10_000).fill({x: 1, y: 1, z: 1})
 
 console.log(positions.length) // output: 10_000
@@ -931,7 +962,7 @@ Using the `e` field to view the value of an element is costly as it forces the v
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
 
 positions.push({x: 1, z: 1, y: 1})
@@ -1207,7 +1238,7 @@ Taken on ```March 31, 2022```
             * [.def](#module_vec-struct..Vec+def) : <code>StructDef</code>
             * [.length](#module_vec-struct..Vec+length) : <code>number</code>
             * [.capacity](#module_vec-struct..Vec+capacity) : <code>number</code>
-            * [.memory](#module_vec-struct..Vec+memory) : <code>ReadonlyFloat32Array</code>
+            * [.memory](#module_vec-struct..Vec+memory) : <code>ReadonlyInt32Array</code>
             * [.index(index)](#module_vec-struct..Vec+index) ⇒ <code>VecCursor.&lt;StructDef&gt;</code>
             * [.at(index)](#module_vec-struct..Vec+at) ⇒ <code>VecCursor.&lt;StructDef&gt;</code>
             * [.forEach(callback)](#module_vec-struct..Vec+forEach) ⇒ <code>void</code>
@@ -1281,7 +1312,7 @@ is type ```Vec<T extends StructDef>```
         * [.def](#module_vec-struct..Vec+def) : <code>StructDef</code>
         * [.length](#module_vec-struct..Vec+length) : <code>number</code>
         * [.capacity](#module_vec-struct..Vec+capacity) : <code>number</code>
-        * [.memory](#module_vec-struct..Vec+memory) : <code>ReadonlyFloat32Array</code>
+        * [.memory](#module_vec-struct..Vec+memory) : <code>ReadonlyInt32Array</code>
         * [.index(index)](#module_vec-struct..Vec+index) ⇒ <code>VecCursor.&lt;StructDef&gt;</code>
         * [.at(index)](#module_vec-struct..Vec+at) ⇒ <code>VecCursor.&lt;StructDef&gt;</code>
         * [.forEach(callback)](#module_vec-struct..Vec+forEach) ⇒ <code>void</code>
@@ -1332,7 +1363,7 @@ is type ```Vec<T extends StructDef>```
 ```js
 import {vec} from "struct-vec"
 
-const geoCoordinates = vec({latitude: "num", longitude: "num"})
+const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
 
 // both are valid ways to initialize
 const withCapacity = new geoCoordinates(100)
@@ -1378,7 +1409,7 @@ The value is between 0 and 2^24 (about 16 million).
 ```js
 import {vec} from "struct-vec"
 
-const Cats = vec({isCool: "num", isDangerous: "num"})
+const Cats = vec({isCool: "f32", isDangerous: "f32"})
 // initialize with a capacity of 15
 const cats = new Cats(15)
 // currently the "cats" array can hold
@@ -1405,7 +1436,7 @@ console.log(cats.length) // output: 16
 ```js
 import {vec} from "struct-vec"
 
-const Cats = vec({isCool: "num", isDangerous: "num"})
+const Cats = vec({isCool: "f32", isDangerous: "f32"})
 // initialize with a capacity of 15
 const cats = new Cats(15)
 // currently the "cats" array can hold
@@ -1430,7 +1461,7 @@ console.log(cats.length) // output: 5
 ```
 <a name="module_vec-struct..Vec+memory"></a>
 
-#### vec.memory : <code>ReadonlyFloat32Array</code>
+#### vec.memory : <code>ReadonlyInt32Array</code>
 The binary representation
 of a vec.
 
@@ -1464,7 +1495,7 @@ index
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 
 const pos = new PositionsV()
 
@@ -1514,7 +1545,7 @@ index
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 
 const pos = new PositionsV()
 
@@ -1547,7 +1578,7 @@ vec element.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
 
 pos.forEach((p, i, v) => {
@@ -1573,7 +1604,7 @@ the result of the callback function.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
 const xVals = pos.map(p => p.x)
 
@@ -1603,7 +1634,7 @@ of the callback function.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
 const yAdd = pos.mapv(p => p.y += 2)
 
@@ -1634,7 +1665,7 @@ returned.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1669,7 +1700,7 @@ function, undefined is returned.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1704,7 +1735,7 @@ that passes the test. Otherwise, -1
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1739,7 +1770,7 @@ that passes the test. Otherwise, -1
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1782,7 +1813,7 @@ to completion over the entire vec.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1817,7 +1848,7 @@ to completion over the entire vec.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1844,7 +1875,7 @@ It returns a Boolean value.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1877,7 +1908,7 @@ modify the vec.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1908,7 +1939,7 @@ far more efficient.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1936,7 +1967,7 @@ far more efficient.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1963,7 +1994,7 @@ far more efficient.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV()
 for (let i = 0; i < 5; i++) {
      pos.push({x: 1, y: 2, z: 10})
@@ -1994,7 +2025,7 @@ vec will not be modified
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const pos = PositionsV(15).fill({x: 1, y: 2, z: 10})
 
 const posCopy = pos.slice()
@@ -2023,7 +2054,7 @@ same vec and returns it without modifying its length.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2065,7 +2096,7 @@ to a vec to avoid resizing multiple times.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 
 // initialize with space for 15 elements
 const p = new PositionV(15)
@@ -2088,7 +2119,7 @@ becomes the first.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2122,7 +2153,7 @@ but instead returns a new vec.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 
 const pos = new PositionsV(3).fill({x: 1, y: 1, z: 1})
 const pos1 = new PositionsV(2).fill({x: 2, y: 1, z: 1})
@@ -2157,7 +2188,7 @@ undefined if the vec is empty
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2200,7 +2231,7 @@ instead the ```pop``` method.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2233,7 +2264,7 @@ It returns the modified vec.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(15).fill({x: 1, y: 1, z: 1})
 console.log(p.length) // output: 15
 
@@ -2258,7 +2289,7 @@ and returns the new length of the Vec.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2295,7 +2326,7 @@ If no elements are removed, an empty vec is returned.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2314,7 +2345,7 @@ const p = new PositionV(20)
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2337,7 +2368,7 @@ const p = new PositionV(20)
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2368,7 +2399,7 @@ undefined if the vec is empty
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2406,7 +2437,7 @@ vec and returns the new length of the vec.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV()
         p.push({x: 233, y: 31, z: 99})
         p.push({x: 122, y: 23, z: 8})
@@ -2444,7 +2475,7 @@ this is a no-op.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 
 // initialize with space for 15 elements
 const p = new PositionV(15)
@@ -2477,7 +2508,7 @@ is sorted in place, and no copy is made.
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2507,7 +2538,7 @@ const p = new PositionV()
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2552,7 +2583,7 @@ vec (vec.length + index)
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2587,7 +2618,7 @@ it will be coerced to 0
 ```js
 import {vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const p = new PositionV(20).fill({x: 1, y: 1, z: 1})
 
 console.log(p.length) // output: 20
@@ -2628,8 +2659,8 @@ input is of type `Vec` (more general).
 **Example** *(Basic Usage)*  
 ```js
 import {vec, Vec} from "struct-vec"
-const PositionV = vec({x: "num", y: "num", z: "num"})
-const CatsV = vec({cuteness: "num", isDangerous: "bool"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+const CatsV = vec({cuteness: "f32", isDangerous: "bool"})
 
 const cats = new CatsV()
 const positions = new PositionsV()
@@ -2674,13 +2705,13 @@ method of ```Worker```s.
 
 | Param | Type | Description |
 | --- | --- | --- |
-| memory | <code>ReadonlyFloat32Array</code> | memory of another Vec of the same kind |
+| memory | <code>ReadonlyInt32Array</code> | memory of another Vec of the same kind |
 
 **Example** *(Multithreading)*  
 ```js
 // ------------ index.mjs ---------------
 import {vec} from "struct-vec"
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV(10_000).fill(
      {x: 1, y: 1, z: 1}
 )
@@ -2691,7 +2722,7 @@ worker.postMessage(positions.memory)
 
 // ------------ worker.mjs ---------------
 import {vec} from "struct-vec"
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 
 self.onmessage = (message) => {
      PositionV.fromMemory(message.data).forEach((pos) => {
@@ -2720,7 +2751,7 @@ with struct def of given vec class.
 ```js
 import {vec, Vec} from "struct-vec"
 
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const arr = new Array(15).fill({x: 1, y: 2, z: 3})
 
 const positions = PositionsV.fromArray(arr)
@@ -2748,7 +2779,7 @@ can stringify any vec instance by calling the
 ```js
 import {vec, Vec} from "struct-vec"
 
-const geoCoordinates = vec({latitude: "num", longitude: "num"})
+const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
 
 const geo = new geoCoordinates(15).fill({
             latitude: 20.10,
@@ -2782,10 +2813,10 @@ console.log(validateStructDef(null)) // output: false
 console.log(validateStructDef(true)) // output: false
 console.log(validateStructDef("def")) // output: false
 console.log(validateStructDef({x: "randomType"})) // output: false
-console.log(validateStructDef({x: {y: "num"}})) // output: false
+console.log(validateStructDef({x: {y: "f32"}})) // output: false
 
-console.log(validateStructDef({x: "num"})) // output: true
-console.log(validateStructDef({code: "num"})) // output: true
+console.log(validateStructDef({x: "f32"})) // output: true
+console.log(validateStructDef({code: "f32"})) // output: true
 ```
 <a name="module_vec-struct..vec"></a>
 
@@ -2822,11 +2853,11 @@ to inputted def
 import {vec} from "struct-vec"
 
 // create Vec definition
-const PositionV = vec({x: "num", y: "num", z: "num"})
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 // now initialize like a normal class
 const p = new PositionV()
 
-const geoCoordinates = vec({latitude: "num", longitude: "num"})
+const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
 const geo = new geoCoordinates(15).fill({latitude: 1, longitude: 1})
 
 // invalid struct defs throws error
@@ -2880,7 +2911,7 @@ import {vecCompile} from "struct-vec"
 const LIB_PATH = "struct-vec"
 
 // create Vec definition
-const def = {x: "num", y: "num", z: "num"}
+const def = {x: "f32", y: "f32", z: "f32"}
 const GeneratedClass = vecCompile(def, LIB_PATH, {
      // create a typescript class
      lang: "ts",

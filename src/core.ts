@@ -12,7 +12,7 @@ const enum encoding {
     encodingBytes = encoding.memorySize * encoding.bytesIn32Bits
 }
 
-const enum defaults {
+export const enum defaults {
     capacity = 15,
     memoryCollectionLimit = 50,
     spaceCharacteCodePoint = 32 // space character (" ") code point
@@ -22,8 +22,9 @@ const MEMORY_LAYOUT = Float32Array
 const BUFFER_TYPE = SharedArrayBuffer
 
 export const VALID_DATA_TYPES_INTERNAL = [
+    "f32",
+    "i32",
     "char",
-    "num",
     "bool"
 ] as const
 
@@ -68,8 +69,8 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * @example <caption>Basic Usage</caption>
      * ```js
      * import {vec, Vec} from "struct-vec"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
-     * const CatsV = vec({cuteness: "num", isDangerous: "bool"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+     * const CatsV = vec({cuteness: "f32", isDangerous: "bool"})
      * 
      * const cats = new CatsV()
      * const positions = new PositionsV()
@@ -112,7 +113,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * is always sent by reference when using the ```postMessage```
      * method of ```Worker```s.
      * 
-     * @param {ReadonlyFloat32Array} memory memory 
+     * @param {ReadonlyInt32Array} memory memory 
      * of another Vec of the same kind
      * @returns {Vec<StructDef>} A new vec
      * 
@@ -120,7 +121,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * // ------------ index.mjs ---------------
      * import {vec} from "struct-vec"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const positions = new PositionV(10_000).fill(
      *      {x: 1, y: 1, z: 1}
      * )
@@ -131,7 +132,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * 
      * // ------------ worker.mjs ---------------
      * import {vec} from "struct-vec"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * 
      * self.onmessage = (message) => {
      *      PositionV.fromMemory(message.data).forEach((pos) => {
@@ -143,7 +144,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```
      */
     static fromMemory<U extends StructDef>(
-        memory: ReadonlyFloat32Array
+        memory: ReadonlyInt32Array
     ): Vec<U> {
         return new this(0, memory) as Vec<U>
     }
@@ -162,7 +163,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec, Vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const arr = new Array(15).fill({x: 1, y: 2, z: 3})
      * 
      * const positions = PositionsV.fromArray(arr)
@@ -194,7 +195,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec, Vec} from "struct-vec"
      * 
-     * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+     * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
      * 
      * const geo = new geoCoordinates(15).fill({
             latitude: 20.10,
@@ -225,17 +226,18 @@ export const VALID_DATA_TYPES_INTERNAL = [
             throw TypeError(`Inputted length or capacity of vec is not an integer.`)
         }
         newVec.reserve(capacity)
-        const vecMemory = (newVec as unknown as {_memory: Float64Array})._memory
+        const vecMemory = newVec._f32Memory
         for (let i = 0; i < arr.length - encoding.JSONMemorySize; i += 1) {
             vecMemory[i] = arr[i]
         }
-        (newVec as unknown as {_length: number})._length = length
+        newVec._length = length
         return newVec as Vec<U>
     } 
 
     
 
-    private _memory: ReadonlyFloat32Array
+    private _f32Memory: Float32Array
+    private _i32Memory: Int32Array
     private readonly _cursor: VecCursorInternals<T>
     private _length: number
     private _capacity: number
@@ -250,7 +252,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+     * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
      * 
      * // both are valid ways to initialize
      * const withCapacity = new geoCoordinates(100)
@@ -258,16 +260,25 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```
      */
     constructor(
-        initialCapacity?: number,
-        memory?: ReadonlyFloat32Array
+        initialCapacity: number = defaults.capacity,
+        memory?: ReadonlyInt32Array
     ) {
         try {
-            this._memory = memory ? memory : createMemory(
-                this.elementSize,
-                initialCapacity
-            )
-            this._length = this._memory[this._memory.length - encoding.lengthReverseIndex]
-            this._capacity = this._memory[this._memory.length - encoding.capacityReverseIndex]
+            let vecCapacity = 0
+            let vecLength = 0
+            let buffer: SharedArrayBuffer
+            if (!memory) {
+                vecCapacity = Math.abs(initialCapacity)
+                buffer = this.createMemory(vecCapacity)
+            } else {
+                vecLength = memory[memory.length - encoding.lengthReverseIndex]
+                vecCapacity = memory[memory.length - encoding.capacityReverseIndex]
+                buffer = memory.buffer as SharedArrayBuffer
+            }
+            this._f32Memory = new Float32Array(buffer)
+            this._i32Memory = new Int32Array(buffer)
+            this._length = vecLength
+            this._capacity = vecCapacity
             this._cursor = new this.cursorDef(this)
         } catch (err) {
             throw new Error(`[Vec::allocator] buffer memory failed to initialize. ${err}`)
@@ -278,10 +289,10 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * The amount of raw memory an individual
      * struct (element of a vec) requires for this vec type.
      * An individual block of memory corresponds to
-     * 8 bytes (64-bits).
+     * 4 bytes (32-bits).
      * 
      * For example if ```elementSize``` is 2, each struct
-     * will take 16 bytes.
+     * will take 8 bytes.
      * 
      * @type {number}
      */
@@ -311,7 +322,8 @@ export const VALID_DATA_TYPES_INTERNAL = [
 
     /**
      * The number of elements in vec. 
-     * The value is between 0 and 2^24 (about 16 million), 
+     * The value is between 0 and (2^32) - 1 
+     * (about 2 billion), 
      * always numerically greater than the 
      * highest index in the array.
      * 
@@ -324,13 +336,14 @@ export const VALID_DATA_TYPES_INTERNAL = [
     /**
      * The number of elements a vec can 
      * hold before needing to resize. 
-     * The value is between 0 and 2^24 (about 16 million).
+     * The value is between 0 and (2^32) - 1 
+     * (about 2 billion).
      * 
      * @example <caption>Expanding Capacity</caption>
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const Cats = vec({isCool: "num", isDangerous: "num"})
+     * const Cats = vec({isCool: "f32", isDangerous: "f32"})
      * // initialize with a capacity of 15
      * const cats = new Cats(15)
      * // currently the "cats" array can hold
@@ -358,7 +371,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const Cats = vec({isCool: "num", isDangerous: "num"})
+     * const Cats = vec({isCool: "f32", isDangerous: "f32"})
      * // initialize with a capacity of 15
      * const cats = new Cats(15)
      * // currently the "cats" array can hold
@@ -396,19 +409,20 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * to manually edit the underlying memory,
      * doing so may lead to memory corruption.
      * 
-     * @type {ReadonlyFloat32Array} 
+     * @type {ReadonlyInt32Array} 
      */
-    get memory(): ReadonlyFloat32Array {
-        const memory = this._memory as Float32Array
+    get memory(): ReadonlyInt32Array {
+        const memory = this._i32Memory
         memory[memory.length - encoding.capacityReverseIndex] = this._capacity
         memory[memory.length - encoding.lengthReverseIndex] = this._length
-        return memory
+        return memory as ReadonlyInt32Array
     }
 
-    set memory(newMemory: ReadonlyFloat32Array) {
-        (this._capacity as number) = newMemory[newMemory.length - encoding.capacityReverseIndex];
-        (this._length as number) = newMemory[newMemory.length - encoding.lengthReverseIndex];
-        this._memory = newMemory
+    set memory(newMemory: ReadonlyInt32Array) {
+        this._capacity = newMemory[newMemory.length - encoding.capacityReverseIndex];
+        this._length = newMemory[newMemory.length - encoding.lengthReverseIndex];
+        this._i32Memory = newMemory as Int32Array
+        this._f32Memory = new Float32Array(newMemory.buffer)
     }
 
     /**
@@ -430,7 +444,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * 
      * const pos = new PositionsV()
      * 
@@ -481,7 +495,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * 
      * const pos = new PositionsV()
      * 
@@ -526,7 +540,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
      * 
      * pos.forEach((p, i, v) => {
@@ -567,7 +581,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
      * const xVals = pos.map(p => p.x)
      * 
@@ -615,7 +629,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
      * const yAdd = pos.mapv(p => p.y += 2)
      * 
@@ -639,7 +653,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
             const value = callback(element, i, this)
             element.e = value
         }
-        deallocateExcessMemory(newVec)
+        this.deallocateExcessMemory()
         this._cursor._viewingIndex = previousIndex
         return newVec
     }
@@ -664,7 +678,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -692,7 +706,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
             const element = this.index(i)
             if (callback(element, i, this)) {
                 const copyStartIndex = i * elementSize;
-                (newVec._memory as Float32Array).copyWithin(
+                newVec._f32Memory.copyWithin(
                     newVecLength * elementSize,
                     copyStartIndex,
                     copyStartIndex + elementSize
@@ -702,7 +716,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
         }
         this._cursor._viewingIndex = previousIndex;
         (newVec as unknown as {_length: number})._length = newVecLength
-        deallocateExcessMemory(newVec)
+        newVec.deallocateExcessMemory()
         return newVec
     }
 
@@ -726,7 +740,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -777,7 +791,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -829,7 +843,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -892,7 +906,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -951,7 +965,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -999,7 +1013,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -1049,7 +1063,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -1104,7 +1118,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -1146,7 +1160,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -1185,7 +1199,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -1244,7 +1258,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 2, z: 10})
      * 
      * const posCopy = pos.slice()
@@ -1278,7 +1292,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
         if (newVecLength < 0) {
             return newVec
         }
-        const newMemory = this._memory.slice()
+        const newMemory = this._f32Memory.slice()
         const shiftStartIndex = startIndex * elementSize
         const shiftEndIndex = endIndex * elementSize
         newMemory.copyWithin(
@@ -1286,9 +1300,9 @@ export const VALID_DATA_TYPES_INTERNAL = [
             shiftStartIndex, 
             shiftEndIndex
         );
-        (newVec as unknown as {_length: number})._length = newVecLength
-        newVec._memory = newMemory
-        deallocateExcessMemory(newVec)
+        newVec._length = newVecLength
+        newVec.replaceMemory(newMemory)
+        newVec.deallocateExcessMemory()
         return newVec
     }
 
@@ -1319,7 +1333,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1357,7 +1371,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
         if (endIndex < 0 || endIndex > length) {
             return this
         }
-        (this._memory as Float32Array).copyWithin(
+        this._f32Memory.copyWithin(
             targetIndex * sizeOfElement,
             startIndex * sizeOfElement,
             endIndex * sizeOfElement,
@@ -1385,7 +1399,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * 
      * // initialize with space for 15 elements
      * const p = new PositionV(15)
@@ -1416,9 +1430,9 @@ export const VALID_DATA_TYPES_INTERNAL = [
             )
             const buffer = new BUFFER_TYPE(bufferSize)
             const memory = new MEMORY_LAYOUT(buffer)
-            memory.set(this._memory)
-            this._memory = memory;
-            (this._capacity as number) = newCapacity
+            memory.set(this._f32Memory)
+            this.replaceMemory(memory)
+            this._capacity = newCapacity
             return this
         } catch (err) {
             console.error(`Vec ::allocator: runtime failed to allocate more memory for vec. Aborting operation`, err)
@@ -1437,7 +1451,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1465,19 +1479,19 @@ export const VALID_DATA_TYPES_INTERNAL = [
         this.reserve(1)
         const temporaryIndex = this._length * elementSize
         while (start < end) {
-            const startElementStartIndex = start * elementSize;
-            (this._memory as Float32Array).copyWithin(
+            const startElementStartIndex = start * elementSize
+            this._f32Memory.copyWithin(
                 temporaryIndex, 
                 startElementStartIndex, 
                 startElementStartIndex + elementSize
             )
-            const endElementStartIndex = end * elementSize;
-            (this._memory as Float32Array).copyWithin(
+            const endElementStartIndex = end * elementSize
+            this._f32Memory.copyWithin(
                 startElementStartIndex,
                 endElementStartIndex,
                 endElementStartIndex + elementSize
-            );
-            (this._memory as Float32Array).copyWithin(
+            )
+            this._f32Memory.copyWithin(
                 endElementStartIndex,
                 temporaryIndex,
                 temporaryIndex + elementSize
@@ -1502,7 +1516,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * 
      * const pos = new PositionsV(3).fill({x: 1, y: 1, z: 1})
      * const pos1 = new PositionsV(2).fill({x: 2, y: 1, z: 1})
@@ -1534,22 +1548,22 @@ export const VALID_DATA_TYPES_INTERNAL = [
         const newVec = new (
             this.constructor as unknown as typeof Vec
         )<T>(combinedCapacity)
-        let copyLength = 0;
-        (newVec._memory as Float32Array).set(
-            this._memory,
+        let copyLength = 0
+        newVec._f32Memory.set(
+            this._f32Memory,
             copyLength
         )
         copyLength += (this.length * elementSize)
         for (let i = 0; i < vecs.length; i += 1) {
-            const vec = vecs[i];
-            (newVec._memory as Float32Array).set(
-                vec._memory,
+            const vec = vecs[i]
+            newVec._f32Memory.set(
+                vec._f32Memory,
                 copyLength
             )
             copyLength += (vec.length * elementSize)
         }
-        (newVec as unknown as {_length: number})._length = combinedLength
-        deallocateExcessMemory(newVec)
+        newVec._length = combinedLength
+        newVec.deallocateExcessMemory()
         return newVec
     }
 
@@ -1569,7 +1583,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1593,12 +1607,12 @@ export const VALID_DATA_TYPES_INTERNAL = [
      */
     pop(): Struct<T> | undefined {
         if (this._length < 1) {
-            deallocateExcessMemory(this)
+            this.deallocateExcessMemory()
             return
         }
         const targetElement = this.index(this._length - 1).e;
         this._length -= 1
-        deallocateExcessMemory(this)
+        this.deallocateExcessMemory()
         return targetElement
     }
     
@@ -1618,7 +1632,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1633,14 +1647,14 @@ export const VALID_DATA_TYPES_INTERNAL = [
      */
     truncate(count: number): number {
         if (this._length < 1) {
-            deallocateExcessMemory(this)
+            this.deallocateExcessMemory()
             return 0
         }
         const removeCount = count > this._length
             ? this._length
             : count;
         this._length -= removeCount
-        deallocateExcessMemory(this)
+        this.deallocateExcessMemory()
         return this._length
     }
     
@@ -1660,7 +1674,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(15).fill({x: 1, y: 1, z: 1})
      * console.log(p.length) // output: 15
      * 
@@ -1699,9 +1713,9 @@ export const VALID_DATA_TYPES_INTERNAL = [
         let copyRange = elementSize
         let copyEnd = copyStart + copyRange
         let operationIndex = copyEnd;
-        (this._length as number) = startIndex
+        this._length = startIndex
         while (operationIndex < endIndexRaw) {
-            (this._memory as Float32Array).copyWithin(
+            this._f32Memory.copyWithin(
                 operationIndex, 
                 copyStart, 
                 copyEnd
@@ -1710,11 +1724,11 @@ export const VALID_DATA_TYPES_INTERNAL = [
             copyEnd = copyStart + copyRange
             operationIndex = copyEnd
         }
-        (this._memory as Float32Array).copyWithin(
+        this._f32Memory.copyWithin(
             operationIndex,
             copyStart,
             copyEnd
-        );
+        )
         this._length += lengthIncrease
         return this
     }
@@ -1732,7 +1746,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1767,9 +1781,9 @@ export const VALID_DATA_TYPES_INTERNAL = [
                 )
                 const buffer = new BUFFER_TYPE(bufferSize)
                 const memory = new MEMORY_LAYOUT(buffer)
-                memory.set(this._memory)
-                this._memory = memory;
-                (this._capacity as number) = newCapacity
+                memory.set(this._f32Memory)
+                this.replaceMemory(memory)
+                this._capacity = newCapacity
             } catch (err) {
                 throw new Error(`[Vec::allocator] runtime failed to allocate more memory for vec. ${err}`)
             }
@@ -1831,7 +1845,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1851,7 +1865,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1875,7 +1889,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1947,25 +1961,25 @@ export const VALID_DATA_TYPES_INTERNAL = [
             }
             const shiftTargetIndex = (startIndex + items.length) * elementSize
             const shiftStartIndex = (startIndex + deleteCount) * elementSize
-            const shiftEndIndex = this._length * elementSize;
-            (this._memory as Float32Array).copyWithin(
+            const shiftEndIndex = this._length * elementSize
+            this._f32Memory.copyWithin(
                 shiftTargetIndex, 
                 shiftStartIndex, 
                 shiftEndIndex
-            );
-            (this._length as number) -= numberOfItemsToDelete
-            deallocateExcessMemory(this)
+            )
+            this._length -= numberOfItemsToDelete
+            this.deallocateExcessMemory()
         } else {
             const lengthIncrease = items.length - deleteCount
             this.reserve(lengthIncrease)
     
             const shiftTargetIndex = (startIndex + lengthIncrease) * elementSize
             const shiftStartIndex = startIndex * elementSize;
-            (this._memory as Float32Array).copyWithin(
+            this._f32Memory.copyWithin(
                 shiftTargetIndex, 
                 shiftStartIndex
-            );
-            (this._length as number) += lengthIncrease
+            )
+            this._length += lengthIncrease
     
             const deletionsEndIndex = startIndex + deleteCount
             for (let i = startIndex; i < deletionsEndIndex; i += 1) {
@@ -1994,7 +2008,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2020,13 +2034,13 @@ export const VALID_DATA_TYPES_INTERNAL = [
         const elementSize = this.elementSize
         const length = this._length
         if (length < 1) {
-            deallocateExcessMemory(this)
+            this.deallocateExcessMemory()
             return
         }
         const element = this.index(0).e;
         this._length -= 1
         if (length < 2) {
-            deallocateExcessMemory(this)
+            this.deallocateExcessMemory()
             return element
         }
         const copyStart = 1 * elementSize
@@ -2034,12 +2048,12 @@ export const VALID_DATA_TYPES_INTERNAL = [
             ((length - 1) * elementSize) 
             + elementSize
         );
-        (this._memory as Float32Array).copyWithin(
+        this._f32Memory.copyWithin(
             0, 
             copyStart, 
             copyEnd
         )
-        deallocateExcessMemory(this)
+        this.deallocateExcessMemory()
         return element
     }
 
@@ -2054,7 +2068,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 233, y: 31, z: 99})
         p.push({x: 122, y: 23, z: 8})
@@ -2083,7 +2097,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
             return newLength
         }
         const shiftToIndex = structs.length * elementSize;
-        (this._memory as Float32Array).copyWithin(
+        this._f32Memory.copyWithin(
             shiftToIndex,
             0
         )
@@ -2114,7 +2128,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * 
      * // initialize with space for 15 elements
      * const p = new PositionV(15)
@@ -2140,12 +2154,8 @@ export const VALID_DATA_TYPES_INTERNAL = [
             if (newCapacity >= capacity) {
                 return this
             }
-            this._memory = shrinkCapacity(
-                this._memory, 
-                elementSize, 
-                newCapacity
-            );
-            (this._capacity as number) = newCapacity
+            this._f32Memory = this.shrinkCapacity(newCapacity)
+            this._capacity = newCapacity
             return this
         } catch (err) {
             throw new Error(`[Vec::allocator] runtime failed to deallocate memory for vec. ${err}`)
@@ -2178,7 +2188,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2209,7 +2219,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2251,18 +2261,18 @@ export const VALID_DATA_TYPES_INTERNAL = [
             )
             if (result !== 0) {
                 const startElementStartIndex = 0 * elementSize;
-                (this._memory as Float32Array).copyWithin(
+                this._f32Memory.copyWithin(
                     temporaryIndex, 
                     startElementStartIndex, 
                     startElementStartIndex + elementSize
                 )
                 const endElementStartIndex = 1 * elementSize;
-                (this._memory as Float32Array).copyWithin(
+                this._f32Memory.copyWithin(
                     startElementStartIndex,
                     endElementStartIndex,
                     endElementStartIndex + elementSize
-                );
-                (this._memory as Float32Array).copyWithin(
+                )
+                this._f32Memory.copyWithin(
                     endElementStartIndex,
                     temporaryIndex,
                     temporaryIndex + elementSize
@@ -2284,18 +2294,18 @@ export const VALID_DATA_TYPES_INTERNAL = [
                 }
                 elementsAreOrdered = false
                 const startElementStartIndex = i * elementSize;
-                (this._memory as Float32Array).copyWithin(
+                this._f32Memory.copyWithin(
                     temporaryIndex, 
                     startElementStartIndex, 
                     startElementStartIndex + elementSize
                 )
                 const endElementStartIndex = (i + 1) * elementSize;
-                (this._memory as Float32Array).copyWithin(
+                this._f32Memory.copyWithin(
                     startElementStartIndex,
                     endElementStartIndex,
                     endElementStartIndex + elementSize
-                );
-                (this._memory as Float32Array).copyWithin(
+                )
+                this._f32Memory.copyWithin(
                     endElementStartIndex,
                     temporaryIndex,
                     temporaryIndex + elementSize
@@ -2318,7 +2328,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2340,20 +2350,20 @@ export const VALID_DATA_TYPES_INTERNAL = [
         const elementSize = this.elementSize
         const temporaryIndex = this._length * elementSize;
         aIndex = aIndex < 0 ? this._length + aIndex : aIndex
-        const startElementStartIndex = (aIndex * elementSize);
-        (this._memory as Float32Array).copyWithin(
+        const startElementStartIndex = (aIndex * elementSize)
+        this._f32Memory.copyWithin(
             temporaryIndex, 
             startElementStartIndex, 
             startElementStartIndex + elementSize
         )
         bIndex = bIndex < 0 ? this._length + bIndex : bIndex
         const endElementStartIndex = bIndex * elementSize;
-        (this._memory as Float32Array).copyWithin(
+        this._f32Memory.copyWithin(
             startElementStartIndex,
             endElementStartIndex,
             endElementStartIndex + elementSize
         );
-        (this._memory as Float32Array).copyWithin(
+        this._f32Memory.copyWithin(
             endElementStartIndex,
             temporaryIndex,
             temporaryIndex + elementSize
@@ -2378,7 +2388,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```js
      * import {vec} from "struct-vec"
      * 
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20).fill({x: 1, y: 1, z: 1})
      * 
      * console.log(p.length) // output: 20
@@ -2405,82 +2415,87 @@ export const VALID_DATA_TYPES_INTERNAL = [
             // convert it to 0. This is done 
             // is because "NaN" is not part of the JSON
             // spec
-            const memoryFragment = this._memory[i] || 0
+            const memoryFragment = this._f32Memory[i] || 0
             memoryStr += (memoryFragment.toString() + ",")
         }
         memoryStr += `${this.elementSize},${this._capacity},${this._length}]`
         return memoryStr
     }
-}
 
-function createMemory(
-    elementSize: number,
-    capacity = defaults.capacity
-): ReadonlyFloat32Array {
-    const normalizedCapacity = Math.abs(capacity)
-    const elementsMemory = (
-        MEMORY_LAYOUT.BYTES_PER_ELEMENT
-        * elementSize
-        * normalizedCapacity
-    )
-    const bufferSize = (
-        elementsMemory
-        + encoding.encodingBytes
-    )
-    const buffer = new BUFFER_TYPE(bufferSize)
-    const memory = new MEMORY_LAYOUT(buffer)
-    memory[memory.length - encoding.capacityReverseIndex] = normalizedCapacity
-    memory[memory.length - encoding.lengthReverseIndex] = 0
-    return memory
-}
-
-function shrinkCapacity(
-    memory: ReadonlyFloat32Array, 
-    elementSize: number,
-    newCapacity: number
-): ReadonlyFloat32Array {
-    const elementBytes = (
-        MEMORY_LAYOUT.BYTES_PER_ELEMENT
-        * elementSize
-        * newCapacity
-    )
-    const bufferBytes = elementBytes + encoding.encodingBytes
-    const buffer = new BUFFER_TYPE(bufferBytes)
-    const newMemory = new MEMORY_LAYOUT(buffer)
-    for (let i = 0; i < memory.length; i += 1) {
-        newMemory[i] = memory[i]
+    private createMemory(capacity: number): SharedArrayBuffer {
+        const elementsMemory = (
+            MEMORY_LAYOUT.BYTES_PER_ELEMENT
+            * this.elementSize
+            * capacity
+        )
+        return new SharedArrayBuffer(
+            elementsMemory
+            + encoding.encodingBytes
+        )
     }
-    return newMemory
-}
 
-function deallocateExcessMemory<T extends StructDef>(
-    vec: Vec<T>
-) {
-    const elementSize = vec.elementSize
-    const length = vec.length
-    const capacity = vec.capacity
-    if (capacity - length <= defaults.memoryCollectionLimit) {
-        return
+    private shrinkCapacity(
+        newCapacity: number
+    ): Float32Array {
+        const elementBytes = (
+            MEMORY_LAYOUT.BYTES_PER_ELEMENT
+            * this.elementSize
+            * newCapacity
+        )
+        const bufferBytes = elementBytes + encoding.encodingBytes
+        const buffer = new BUFFER_TYPE(bufferBytes)
+        const newMemory = new MEMORY_LAYOUT(buffer)
+        const len = this._f32Memory.length
+        for (let i = 0; i < len; i += 1) {
+            newMemory[i] = this._f32Memory[i]
+        }
+        return newMemory
     }
-    (vec as unknown as {_memory: ReadonlyFloat32Array})._memory = shrinkCapacity(
-        (vec as unknown as {_memory: ReadonlyFloat32Array})._memory, 
-        elementSize, 
-        length + defaults.memoryCollectionLimit
-    );
-    (vec as unknown as {_capacity: number})._capacity = (
-        length
-        + defaults.memoryCollectionLimit
-    )
+
+    private deallocateExcessMemory() {
+        const length = this._length
+        const capacity = this._capacity
+        if (
+            (capacity - length) 
+            <= defaults.memoryCollectionLimit
+        ) {
+            return
+        }
+        const memory = this.shrinkCapacity(
+            length + defaults.memoryCollectionLimit
+        )
+        this.replaceMemory(memory)
+        this._capacity = (
+            length
+            + defaults.memoryCollectionLimit
+        )
+    }
+
+    private replaceMemory(memory: Float32Array) {
+        this._f32Memory = memory
+        this._i32Memory = new Int32Array(memory.buffer)
+    }
 }
 
-export type VecPrimitive = "num" | "bool" | "char"
-export type Num<T extends VecPrimitive> = T extends "num" ? number : never
-export type Bool<T extends VecPrimitive> = T extends "bool" ? boolean : never
-export type Char<T extends VecPrimitive> = T extends "char" ? string : never
+export type VecPrimitive = (
+    "f32" 
+    | "i32"
+    | "bool" 
+    | "char"
+)
+export type f32<T extends VecPrimitive> = T extends "f32" ? 
+    number : never
+export type i32<T extends VecPrimitive> = T extends "i32" ? 
+    number : never
+export type bool<T extends VecPrimitive> = T extends "bool" ? 
+    boolean : never
+export type char<T extends VecPrimitive> = T extends "char" ? 
+    string : never
 export type Primitive<T extends VecPrimitive> = (
-    Num<T> 
-    | Bool<T>
-    | Char<T>
+    f32<T> 
+    | i32<T>
+    | bool<T>
+    | char<T>
 )
 
 export type StructDef = Readonly<{[key: string]: VecPrimitive}>
@@ -2493,8 +2508,9 @@ type TypedArrayMutableProperties = (
     | 'set' 
     | 'sort'
 )
-export interface ReadonlyFloat32Array extends Omit<
-    Float32Array, TypedArrayMutableProperties
+
+export interface ReadonlyInt32Array extends Omit<
+    Int32Array, TypedArrayMutableProperties
 > {
     readonly [n: number]: number
 }

@@ -1,9 +1,16 @@
 /**
  * @module vec-struct
  */
-import { Vec as BaseVec, StructDef, Struct, ReadonlyFloat32Array } from "./core";
+import { Vec as BaseVec } from "./core";
+import type { StructDef, Struct, ReadonlyInt32Array } from "./core";
 export { Vec } from "./core";
-export type { CursorConstructor, VecCursor, Primitive, Bool, Char, Num, VecPrimitive, ReadonlyFloat32Array, Struct, StructDef, SortCompareCallback, MapCallback, MapvCallback, ForEachCallback, ReduceCallback, TruthyIterCallback } from "./core";
+export type { CursorConstructor, VecCursor, ReadonlyInt32Array, } from "./core";
+export type { SortCompareCallback, MapCallback } from "./core";
+export type { ForEachCallback, ReduceCallback } from "./core";
+export type { MapvCallback, TruthyIterCallback } from "./core";
+export type { i32, f32, char, bool } from "./core";
+export type { VecPrimitive, Primitive } from "./core";
+export type { Struct, StructDef, } from "./core";
 /**
  * A helper function to validate an inputted struct
  * definition. If inputted struct def is valid
@@ -21,10 +28,10 @@ export type { CursorConstructor, VecCursor, Primitive, Bool, Char, Num, VecPrimi
  * console.log(validateStructDef(true)) // output: false
  * console.log(validateStructDef("def")) // output: false
  * console.log(validateStructDef({x: "randomType"})) // output: false
- * console.log(validateStructDef({x: {y: "num"}})) // output: false
+ * console.log(validateStructDef({x: {y: "f32"}})) // output: false
  *
- * console.log(validateStructDef({x: "num"})) // output: true
- * console.log(validateStructDef({code: "num"})) // output: true
+ * console.log(validateStructDef({x: "f32"})) // output: true
+ * console.log(validateStructDef({code: "f32"})) // output: true
  * ```
  */
 export declare function validateStructDef(def: any): boolean;
@@ -59,11 +66,11 @@ export declare function validateStructDef(def: any): boolean;
  * import {vec} from "struct-vec"
  *
  * // create Vec definition
- * const PositionV = vec({x: "num", y: "num", z: "num"})
+ * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
  * // now initialize like a normal class
  * const p = new PositionV()
  *
- * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+ * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
  * const geo = new geoCoordinates(15).fill({latitude: 1, longitude: 1})
  *
  * // invalid struct defs throws error
@@ -124,7 +131,7 @@ export declare function vec<S extends StructDef>(structDef: S): VecClass<S>;
  * const LIB_PATH = "struct-vec"
  *
  * // create Vec definition
- * const def = {x: "num", y: "num", z: "num"}
+ * const def = {x: "f32", y: "f32", z: "f32"}
  * const GeneratedClass = vecCompile(def, LIB_PATH, {
  *      // create a typescript class
  *      lang: "ts",
@@ -165,8 +172,8 @@ export interface VecClass<T extends StructDef> {
      * @example <caption>Basic Usage</caption>
      * ```js
      * import {vec, Vec} from "struct-vec"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
-     * const CatsV = vec({cuteness: "num", isDangerous: "bool"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+     * const CatsV = vec({cuteness: "f32", isDangerous: "bool"})
      *
      * const cats = new CatsV()
      * const positions = new PositionsV()
@@ -198,7 +205,7 @@ export interface VecClass<T extends StructDef> {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+     * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
      *
      * // both are valid ways to initialize
      * const withCapacity = new geoCoordinates(100)
@@ -232,7 +239,7 @@ export interface VecClass<T extends StructDef> {
      * ```js
      * // ------------ index.js ---------------
      * import {vec} from "struct-vec"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const positions = new PositionV(10_000).fill(
      *      {x: 1, y: 1, z: 1}
      * )
@@ -243,7 +250,7 @@ export interface VecClass<T extends StructDef> {
      *
      * // ------------ worker.js ---------------
      * import {vec} from "struct-vec" // or importScripts if in Firefox
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * self.onmessage = (message) => {
      *      PositionV.fromMemory(message.data).forEach((pos) => {
@@ -254,7 +261,7 @@ export interface VecClass<T extends StructDef> {
      * }
      * ```
      */
-    fromMemory(memory: ReadonlyFloat32Array): BaseVec<T>;
+    fromMemory(memory: ReadonlyInt32Array): BaseVec<T>;
     /**
      * An alternate constructor for vecs.
      * Creates a vec from inputted
@@ -269,7 +276,7 @@ export interface VecClass<T extends StructDef> {
      * ```js
      * import {vec, Vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const arr = new Array(15).fill({x: 1, y: 2, z: 3})
      *
      * const positions = PositionsV.fromArray(arr)
@@ -294,7 +301,7 @@ export interface VecClass<T extends StructDef> {
      * ```js
      * import {vec, Vec} from "struct-vec"
      *
-     * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+     * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
      *
      * const geo = new geoCoordinates(15).fill({
             latitude: 20.10,

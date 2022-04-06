@@ -239,22 +239,22 @@ describe("typescript type casting", () => {
     it("generated class conforms to VecClass interface (type returned from runtime compiler)", () => {
         let _x = NamedJs as VecClass<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
         let _y = NamedTs as VecClass<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
         let _z = defaultJs.DefaultJs as VecClass<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
         let _a = defaultTs.DefaultTs as VecClass<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
     })
@@ -262,73 +262,73 @@ describe("typescript type casting", () => {
     it("Instances from generated classes are of type Vec", () => {
         let _x = NamedJs as VecClass<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
         const x = new _x() as Vec<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
         let _y = NamedTs as VecClass<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
         const y = new _y() as Vec<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
         let _z = defaultJs.DefaultJs as VecClass<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
         const z = new _z() as Vec<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
         let _a = defaultTs.DefaultTs as VecClass<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
         const a = new _a() as Vec<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }>
     })
 
     it("runtime and buildtime compilers produce the same class with the same struct def, and interop 100%", () => {
-        const def = {x: "bool", y: "num", z: "char"} as const
+        const def = {x: "bool", y: "f32", z: "char"} as const
         expect(def).toEqual(structdef)
         const v = vec(def)
         const _v = new v()
         
         const x = new NamedJs() as Vec<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }> as typeof _v
         
         const y = new NamedTs() as Vec<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }> as typeof _v
         
         const z = new defaultJs.DefaultJs() as Vec<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }> as typeof _v
 
         const a = new defaultTs.DefaultTs() as Vec<{
             x: "bool",
-            y: "num",
+            y: "f32",
             z: "char"
         }> as typeof _v
     })

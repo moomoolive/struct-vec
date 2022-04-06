@@ -3,12 +3,13 @@
  * @module vec-struct
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Vec = exports.VALID_DATA_TYPES_INTERNAL = exports.MEMORY_LAYOUT = void 0;
-exports.MEMORY_LAYOUT = Float32Array;
+exports.Vec = exports.VALID_DATA_TYPES_INTERNAL = void 0;
+const MEMORY_LAYOUT = Float32Array;
 const BUFFER_TYPE = SharedArrayBuffer;
 exports.VALID_DATA_TYPES_INTERNAL = [
+    "f32",
+    "i32",
     "char",
-    "num",
     "bool"
 ];
 /**
@@ -43,18 +44,31 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+     * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
      *
      * // both are valid ways to initialize
      * const withCapacity = new geoCoordinates(100)
      * const without = new geoCoordinates()
      * ```
      */
-    constructor(initialCapacity, memory) {
+    constructor(initialCapacity = 15 /* capacity */, memory) {
         try {
-            this._memory = memory ? memory : createMemory(this.elementSize, initialCapacity);
-            this._length = this._memory[this._memory.length - 1 /* lengthReverseIndex */];
-            this._capacity = this._memory[this._memory.length - 2 /* capacityReverseIndex */];
+            let vecCapacity = 0;
+            let vecLength = 0;
+            let buffer;
+            if (!memory) {
+                vecCapacity = Math.abs(initialCapacity);
+                buffer = this.createMemory(vecCapacity);
+            }
+            else {
+                vecLength = memory[memory.length - 1 /* lengthReverseIndex */];
+                vecCapacity = memory[memory.length - 2 /* capacityReverseIndex */];
+                buffer = memory.buffer;
+            }
+            this._f32Memory = new Float32Array(buffer);
+            this._i32Memory = new Int32Array(buffer);
+            this._length = vecLength;
+            this._capacity = vecCapacity;
             this._cursor = new this.cursorDef(this);
         }
         catch (err) {
@@ -79,8 +93,8 @@ class Vec {
     * @example <caption>Basic Usage</caption>
     * ```js
     * import {vec, Vec} from "struct-vec"
-    * const PositionV = vec({x: "num", y: "num", z: "num"})
-    * const CatsV = vec({cuteness: "num", isDangerous: "bool"})
+    * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+    * const CatsV = vec({cuteness: "f32", isDangerous: "bool"})
     *
     * const cats = new CatsV()
     * const positions = new PositionsV()
@@ -122,7 +136,7 @@ class Vec {
      * is always sent by reference when using the ```postMessage```
      * method of ```Worker```s.
      *
-     * @param {ReadonlyFloat32Array} memory memory
+     * @param {ReadonlyInt32Array} memory memory
      * of another Vec of the same kind
      * @returns {Vec<StructDef>} A new vec
      *
@@ -130,7 +144,7 @@ class Vec {
      * ```js
      * // ------------ index.mjs ---------------
      * import {vec} from "struct-vec"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const positions = new PositionV(10_000).fill(
      *      {x: 1, y: 1, z: 1}
      * )
@@ -141,7 +155,7 @@ class Vec {
      *
      * // ------------ worker.mjs ---------------
      * import {vec} from "struct-vec"
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * self.onmessage = (message) => {
      *      PositionV.fromMemory(message.data).forEach((pos) => {
@@ -169,7 +183,7 @@ class Vec {
      * ```js
      * import {vec, Vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const arr = new Array(15).fill({x: 1, y: 2, z: 3})
      *
      * const positions = PositionsV.fromArray(arr)
@@ -198,7 +212,7 @@ class Vec {
      * ```js
      * import {vec, Vec} from "struct-vec"
      *
-     * const geoCoordinates = vec({latitude: "num", longitude: "num"})
+     * const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
      *
      * const geo = new geoCoordinates(15).fill({
             latitude: 20.10,
@@ -227,7 +241,7 @@ class Vec {
             throw TypeError(`Inputted length or capacity of vec is not an integer.`);
         }
         newVec.reserve(capacity);
-        const vecMemory = newVec._memory;
+        const vecMemory = newVec._f32Memory;
         for (let i = 0; i < arr.length - 3 /* JSONMemorySize */; i += 1) {
             vecMemory[i] = arr[i];
         }
@@ -287,7 +301,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const Cats = vec({isCool: "num", isDangerous: "num"})
+     * const Cats = vec({isCool: "f32", isDangerous: "f32"})
      * // initialize with a capacity of 15
      * const cats = new Cats(15)
      * // currently the "cats" array can hold
@@ -315,7 +329,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const Cats = vec({isCool: "num", isDangerous: "num"})
+     * const Cats = vec({isCool: "f32", isDangerous: "f32"})
      * // initialize with a capacity of 15
      * const cats = new Cats(15)
      * // currently the "cats" array can hold
@@ -352,10 +366,10 @@ class Vec {
      * to manually edit the underlying memory,
      * doing so may lead to memory corruption.
      *
-     * @type {ReadonlyFloat32Array}
+     * @type {ReadonlyInt32Array}
      */
     get memory() {
-        const memory = this._memory;
+        const memory = this._i32Memory;
         memory[memory.length - 2 /* capacityReverseIndex */] = this._capacity;
         memory[memory.length - 1 /* lengthReverseIndex */] = this._length;
         return memory;
@@ -363,7 +377,8 @@ class Vec {
     set memory(newMemory) {
         this._capacity = newMemory[newMemory.length - 2 /* capacityReverseIndex */];
         this._length = newMemory[newMemory.length - 1 /* lengthReverseIndex */];
-        this._memory = newMemory;
+        this._i32Memory = newMemory;
+        this._f32Memory = new Float32Array(newMemory.buffer);
     }
     /**
      * Returns a cursor which allows the viewing of
@@ -384,7 +399,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * const pos = new PositionsV()
      *
@@ -434,7 +449,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * const pos = new PositionsV()
      *
@@ -476,7 +491,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
      *
      * pos.forEach((p, i, v) => {
@@ -516,7 +531,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
      * const xVals = pos.map(p => p.x)
      *
@@ -563,7 +578,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 1, z: 1})
      * const yAdd = pos.mapv(p => p.y += 2)
      *
@@ -585,7 +600,7 @@ class Vec {
             const value = callback(element, i, this);
             element.e = value;
         }
-        deallocateExcessMemory(newVec);
+        this.deallocateExcessMemory();
         this._cursor._viewingIndex = previousIndex;
         return newVec;
     }
@@ -609,7 +624,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -637,13 +652,13 @@ class Vec {
             const element = this.index(i);
             if (callback(element, i, this)) {
                 const copyStartIndex = i * elementSize;
-                newVec._memory.copyWithin(newVecLength * elementSize, copyStartIndex, copyStartIndex + elementSize);
+                newVec._f32Memory.copyWithin(newVecLength * elementSize, copyStartIndex, copyStartIndex + elementSize);
                 newVecLength += 1;
             }
         }
         this._cursor._viewingIndex = previousIndex;
         newVec._length = newVecLength;
-        deallocateExcessMemory(newVec);
+        newVec.deallocateExcessMemory();
         return newVec;
     }
     /**
@@ -666,7 +681,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -716,7 +731,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -767,7 +782,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -829,7 +844,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -884,7 +899,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -928,7 +943,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -977,7 +992,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -1030,7 +1045,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -1069,7 +1084,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -1107,7 +1122,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV()
      * for (let i = 0; i < 5; i++) {
      *      pos.push({x: 1, y: 2, z: 10})
@@ -1164,7 +1179,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const pos = PositionsV(15).fill({x: 1, y: 2, z: 10})
      *
      * const posCopy = pos.slice()
@@ -1192,13 +1207,13 @@ class Vec {
         if (newVecLength < 0) {
             return newVec;
         }
-        const newMemory = this._memory.slice();
+        const newMemory = this._f32Memory.slice();
         const shiftStartIndex = startIndex * elementSize;
         const shiftEndIndex = endIndex * elementSize;
         newMemory.copyWithin(0, shiftStartIndex, shiftEndIndex);
         newVec._length = newVecLength;
-        newVec._memory = newMemory;
-        deallocateExcessMemory(newVec);
+        newVec.replaceMemory(newMemory);
+        newVec.deallocateExcessMemory();
         return newVec;
     }
     /**
@@ -1228,7 +1243,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1262,7 +1277,7 @@ class Vec {
         if (endIndex < 0 || endIndex > length) {
             return this;
         }
-        this._memory.copyWithin(targetIndex * sizeOfElement, startIndex * sizeOfElement, endIndex * sizeOfElement);
+        this._f32Memory.copyWithin(targetIndex * sizeOfElement, startIndex * sizeOfElement, endIndex * sizeOfElement);
         return this;
     }
     /**
@@ -1285,7 +1300,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * // initialize with space for 15 elements
      * const p = new PositionV(15)
@@ -1305,15 +1320,15 @@ class Vec {
                 return;
             }
             const newCapacity = length + additional;
-            const elementsMemory = (exports.MEMORY_LAYOUT.BYTES_PER_ELEMENT
+            const elementsMemory = (MEMORY_LAYOUT.BYTES_PER_ELEMENT
                 * elementSize
                 * newCapacity);
             const bufferSize = (8 /* encodingBytes */
                 + elementsMemory);
             const buffer = new BUFFER_TYPE(bufferSize);
-            const memory = new exports.MEMORY_LAYOUT(buffer);
-            memory.set(this._memory);
-            this._memory = memory;
+            const memory = new MEMORY_LAYOUT(buffer);
+            memory.set(this._f32Memory);
+            this.replaceMemory(memory);
             this._capacity = newCapacity;
             return this;
         }
@@ -1333,7 +1348,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1362,10 +1377,10 @@ class Vec {
         const temporaryIndex = this._length * elementSize;
         while (start < end) {
             const startElementStartIndex = start * elementSize;
-            this._memory.copyWithin(temporaryIndex, startElementStartIndex, startElementStartIndex + elementSize);
+            this._f32Memory.copyWithin(temporaryIndex, startElementStartIndex, startElementStartIndex + elementSize);
             const endElementStartIndex = end * elementSize;
-            this._memory.copyWithin(startElementStartIndex, endElementStartIndex, endElementStartIndex + elementSize);
-            this._memory.copyWithin(endElementStartIndex, temporaryIndex, temporaryIndex + elementSize);
+            this._f32Memory.copyWithin(startElementStartIndex, endElementStartIndex, endElementStartIndex + elementSize);
+            this._f32Memory.copyWithin(endElementStartIndex, temporaryIndex, temporaryIndex + elementSize);
             start += 1;
             end -= 1;
         }
@@ -1385,7 +1400,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * const pos = new PositionsV(3).fill({x: 1, y: 1, z: 1})
      * const pos1 = new PositionsV(2).fill({x: 2, y: 1, z: 1})
@@ -1416,15 +1431,15 @@ class Vec {
         }
         const newVec = new this.constructor(combinedCapacity);
         let copyLength = 0;
-        newVec._memory.set(this._memory, copyLength);
+        newVec._f32Memory.set(this._f32Memory, copyLength);
         copyLength += (this.length * elementSize);
         for (let i = 0; i < vecs.length; i += 1) {
             const vec = vecs[i];
-            newVec._memory.set(vec._memory, copyLength);
+            newVec._f32Memory.set(vec._f32Memory, copyLength);
             copyLength += (vec.length * elementSize);
         }
         newVec._length = combinedLength;
-        deallocateExcessMemory(newVec);
+        newVec.deallocateExcessMemory();
         return newVec;
     }
     /**
@@ -1443,7 +1458,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1467,12 +1482,12 @@ class Vec {
      */
     pop() {
         if (this._length < 1) {
-            deallocateExcessMemory(this);
+            this.deallocateExcessMemory();
             return;
         }
         const targetElement = this.index(this._length - 1).e;
         this._length -= 1;
-        deallocateExcessMemory(this);
+        this.deallocateExcessMemory();
         return targetElement;
     }
     /**
@@ -1491,7 +1506,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1506,14 +1521,14 @@ class Vec {
      */
     truncate(count) {
         if (this._length < 1) {
-            deallocateExcessMemory(this);
+            this.deallocateExcessMemory();
             return 0;
         }
         const removeCount = count > this._length
             ? this._length
             : count;
         this._length -= removeCount;
-        deallocateExcessMemory(this);
+        this.deallocateExcessMemory();
         return this._length;
     }
     /**
@@ -1532,7 +1547,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(15).fill({x: 1, y: 1, z: 1})
      * console.log(p.length) // output: 15
      *
@@ -1569,12 +1584,12 @@ class Vec {
         let operationIndex = copyEnd;
         this._length = startIndex;
         while (operationIndex < endIndexRaw) {
-            this._memory.copyWithin(operationIndex, copyStart, copyEnd);
+            this._f32Memory.copyWithin(operationIndex, copyStart, copyEnd);
             copyRange += copyRange;
             copyEnd = copyStart + copyRange;
             operationIndex = copyEnd;
         }
-        this._memory.copyWithin(operationIndex, copyStart, copyEnd);
+        this._f32Memory.copyWithin(operationIndex, copyStart, copyEnd);
         this._length += lengthIncrease;
         return this;
     }
@@ -1591,7 +1606,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1615,15 +1630,15 @@ class Vec {
                 const newCapacity = minimumCapcity > targetCapacity
                     ? minimumCapcity + 15 /* capacity */
                     : targetCapacity;
-                const elementsMemory = (exports.MEMORY_LAYOUT.BYTES_PER_ELEMENT
+                const elementsMemory = (MEMORY_LAYOUT.BYTES_PER_ELEMENT
                     * elementSize
                     * newCapacity);
                 const bufferSize = (8 /* encodingBytes */
                     + elementsMemory);
                 const buffer = new BUFFER_TYPE(bufferSize);
-                const memory = new exports.MEMORY_LAYOUT(buffer);
-                memory.set(this._memory);
-                this._memory = memory;
+                const memory = new MEMORY_LAYOUT(buffer);
+                memory.set(this._f32Memory);
+                this.replaceMemory(memory);
                 this._capacity = newCapacity;
             }
             catch (err) {
@@ -1686,7 +1701,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1706,7 +1721,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1730,7 +1745,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1795,16 +1810,16 @@ class Vec {
             const shiftTargetIndex = (startIndex + items.length) * elementSize;
             const shiftStartIndex = (startIndex + deleteCount) * elementSize;
             const shiftEndIndex = this._length * elementSize;
-            this._memory.copyWithin(shiftTargetIndex, shiftStartIndex, shiftEndIndex);
+            this._f32Memory.copyWithin(shiftTargetIndex, shiftStartIndex, shiftEndIndex);
             this._length -= numberOfItemsToDelete;
-            deallocateExcessMemory(this);
+            this.deallocateExcessMemory();
         }
         else {
             const lengthIncrease = items.length - deleteCount;
             this.reserve(lengthIncrease);
             const shiftTargetIndex = (startIndex + lengthIncrease) * elementSize;
             const shiftStartIndex = startIndex * elementSize;
-            this._memory.copyWithin(shiftTargetIndex, shiftStartIndex);
+            this._f32Memory.copyWithin(shiftTargetIndex, shiftStartIndex);
             this._length += lengthIncrease;
             const deletionsEndIndex = startIndex + deleteCount;
             for (let i = startIndex; i < deletionsEndIndex; i += 1) {
@@ -1831,7 +1846,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -1857,20 +1872,20 @@ class Vec {
         const elementSize = this.elementSize;
         const length = this._length;
         if (length < 1) {
-            deallocateExcessMemory(this);
+            this.deallocateExcessMemory();
             return;
         }
         const element = this.index(0).e;
         this._length -= 1;
         if (length < 2) {
-            deallocateExcessMemory(this);
+            this.deallocateExcessMemory();
             return element;
         }
         const copyStart = 1 * elementSize;
         const copyEnd = (((length - 1) * elementSize)
             + elementSize);
-        this._memory.copyWithin(0, copyStart, copyEnd);
-        deallocateExcessMemory(this);
+        this._f32Memory.copyWithin(0, copyStart, copyEnd);
+        this.deallocateExcessMemory();
         return element;
     }
     /**
@@ -1884,7 +1899,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 233, y: 31, z: 99})
         p.push({x: 122, y: 23, z: 8})
@@ -1913,7 +1928,7 @@ class Vec {
             return newLength;
         }
         const shiftToIndex = structs.length * elementSize;
-        this._memory.copyWithin(shiftToIndex, 0);
+        this._f32Memory.copyWithin(shiftToIndex, 0);
         for (let i = 0; i < structs.length; i += 1) {
             this.index(i).e = structs[i];
         }
@@ -1940,7 +1955,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      *
      * // initialize with space for 15 elements
      * const p = new PositionV(15)
@@ -1964,7 +1979,7 @@ class Vec {
             if (newCapacity >= capacity) {
                 return this;
             }
-            this._memory = shrinkCapacity(this._memory, elementSize, newCapacity);
+            this._f32Memory = this.shrinkCapacity(newCapacity);
             this._capacity = newCapacity;
             return this;
         }
@@ -1998,7 +2013,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2029,7 +2044,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2068,10 +2083,10 @@ class Vec {
             const result = compareFn(helperCursor, this.index(1));
             if (result !== 0) {
                 const startElementStartIndex = 0 * elementSize;
-                this._memory.copyWithin(temporaryIndex, startElementStartIndex, startElementStartIndex + elementSize);
+                this._f32Memory.copyWithin(temporaryIndex, startElementStartIndex, startElementStartIndex + elementSize);
                 const endElementStartIndex = 1 * elementSize;
-                this._memory.copyWithin(startElementStartIndex, endElementStartIndex, endElementStartIndex + elementSize);
-                this._memory.copyWithin(endElementStartIndex, temporaryIndex, temporaryIndex + elementSize);
+                this._f32Memory.copyWithin(startElementStartIndex, endElementStartIndex, endElementStartIndex + elementSize);
+                this._f32Memory.copyWithin(endElementStartIndex, temporaryIndex, temporaryIndex + elementSize);
             }
             return this;
         }
@@ -2086,10 +2101,10 @@ class Vec {
                 }
                 elementsAreOrdered = false;
                 const startElementStartIndex = i * elementSize;
-                this._memory.copyWithin(temporaryIndex, startElementStartIndex, startElementStartIndex + elementSize);
+                this._f32Memory.copyWithin(temporaryIndex, startElementStartIndex, startElementStartIndex + elementSize);
                 const endElementStartIndex = (i + 1) * elementSize;
-                this._memory.copyWithin(startElementStartIndex, endElementStartIndex, endElementStartIndex + elementSize);
-                this._memory.copyWithin(endElementStartIndex, temporaryIndex, temporaryIndex + elementSize);
+                this._f32Memory.copyWithin(startElementStartIndex, endElementStartIndex, endElementStartIndex + elementSize);
+                this._f32Memory.copyWithin(endElementStartIndex, temporaryIndex, temporaryIndex + elementSize);
             }
         }
         return this;
@@ -2107,7 +2122,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV()
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -2130,11 +2145,11 @@ class Vec {
         const temporaryIndex = this._length * elementSize;
         aIndex = aIndex < 0 ? this._length + aIndex : aIndex;
         const startElementStartIndex = (aIndex * elementSize);
-        this._memory.copyWithin(temporaryIndex, startElementStartIndex, startElementStartIndex + elementSize);
+        this._f32Memory.copyWithin(temporaryIndex, startElementStartIndex, startElementStartIndex + elementSize);
         bIndex = bIndex < 0 ? this._length + bIndex : bIndex;
         const endElementStartIndex = bIndex * elementSize;
-        this._memory.copyWithin(startElementStartIndex, endElementStartIndex, endElementStartIndex + elementSize);
-        this._memory.copyWithin(endElementStartIndex, temporaryIndex, temporaryIndex + elementSize);
+        this._f32Memory.copyWithin(startElementStartIndex, endElementStartIndex, endElementStartIndex + elementSize);
+        this._f32Memory.copyWithin(endElementStartIndex, temporaryIndex, temporaryIndex + elementSize);
         return this;
     }
     /**
@@ -2154,7 +2169,7 @@ class Vec {
      * ```js
      * import {vec} from "struct-vec"
      *
-     * const PositionV = vec({x: "num", y: "num", z: "num"})
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
      * const p = new PositionV(20).fill({x: 1, y: 1, z: 1})
      *
      * console.log(p.length) // output: 20
@@ -2181,47 +2196,47 @@ class Vec {
             // convert it to 0. This is done 
             // is because "NaN" is not part of the JSON
             // spec
-            const memoryFragment = this._memory[i] || 0;
+            const memoryFragment = this._f32Memory[i] || 0;
             memoryStr += (memoryFragment.toString() + ",");
         }
         memoryStr += `${this.elementSize},${this._capacity},${this._length}]`;
         return memoryStr;
     }
+    createMemory(capacity) {
+        const elementsMemory = (MEMORY_LAYOUT.BYTES_PER_ELEMENT
+            * this.elementSize
+            * capacity);
+        return new SharedArrayBuffer(elementsMemory
+            + 8 /* encodingBytes */);
+    }
+    shrinkCapacity(newCapacity) {
+        const elementBytes = (MEMORY_LAYOUT.BYTES_PER_ELEMENT
+            * this.elementSize
+            * newCapacity);
+        const bufferBytes = elementBytes + 8 /* encodingBytes */;
+        const buffer = new BUFFER_TYPE(bufferBytes);
+        const newMemory = new MEMORY_LAYOUT(buffer);
+        const len = this._f32Memory.length;
+        for (let i = 0; i < len; i += 1) {
+            newMemory[i] = this._f32Memory[i];
+        }
+        return newMemory;
+    }
+    deallocateExcessMemory() {
+        const length = this._length;
+        const capacity = this._capacity;
+        if ((capacity - length)
+            <= 50 /* memoryCollectionLimit */) {
+            return;
+        }
+        const memory = this.shrinkCapacity(length + 50 /* memoryCollectionLimit */);
+        this.replaceMemory(memory);
+        this._capacity = (length
+            + 50 /* memoryCollectionLimit */);
+    }
+    replaceMemory(memory) {
+        this._f32Memory = memory;
+        this._i32Memory = new Int32Array(memory.buffer);
+    }
 }
 exports.Vec = Vec;
-function createMemory(elementSize, capacity = 15 /* capacity */) {
-    const normalizedCapacity = Math.abs(capacity);
-    const elementsMemory = (exports.MEMORY_LAYOUT.BYTES_PER_ELEMENT
-        * elementSize
-        * normalizedCapacity);
-    const bufferSize = (elementsMemory
-        + 8 /* encodingBytes */);
-    const buffer = new BUFFER_TYPE(bufferSize);
-    const memory = new exports.MEMORY_LAYOUT(buffer);
-    memory[memory.length - 2 /* capacityReverseIndex */] = normalizedCapacity;
-    memory[memory.length - 1 /* lengthReverseIndex */] = 0;
-    return memory;
-}
-function shrinkCapacity(memory, elementSize, newCapacity) {
-    const elementBytes = (exports.MEMORY_LAYOUT.BYTES_PER_ELEMENT
-        * elementSize
-        * newCapacity);
-    const bufferBytes = elementBytes + 8 /* encodingBytes */;
-    const buffer = new BUFFER_TYPE(bufferBytes);
-    const newMemory = new exports.MEMORY_LAYOUT(buffer);
-    for (let i = 0; i < memory.length; i += 1) {
-        newMemory[i] = memory[i];
-    }
-    return newMemory;
-}
-function deallocateExcessMemory(vec) {
-    const elementSize = vec.elementSize;
-    const length = vec.length;
-    const capacity = vec.capacity;
-    if (capacity - length <= 50 /* memoryCollectionLimit */) {
-        return;
-    }
-    vec._memory = shrinkCapacity(vec._memory, elementSize, length + 50 /* memoryCollectionLimit */);
-    vec._capacity = (length
-        + 50 /* memoryCollectionLimit */);
-}

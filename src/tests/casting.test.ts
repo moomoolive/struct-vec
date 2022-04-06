@@ -1,11 +1,11 @@
 import {expect, it, describe} from "@jest/globals"
 import {vec, Vec} from "../index"
-const geoCoordinates = vec({latitude: "num", longitude: "num"})
+const geoCoordinates = vec({latitude: "f32", longitude: "f32"})
 
 describe("type checking", () => {
     it("Vec.isVec static method should correctly identify vecs and non-vecs", () => {
         expect(Vec.isVec(new geoCoordinates())).toBe(true)
-        const p = vec({x: "num", y: "num", z: "num"})
+        const p = vec({x: "f32", y: "f32", z: "f32"})
         expect(Vec.isVec(new p())).toBe(true)
 
         expect(Vec.isVec(0)).toBe(false)
@@ -23,7 +23,7 @@ describe("type checking", () => {
     it("Vec.isVec static method for generated class should check if type is instance of generated vec class", () => {
         expect(geoCoordinates.isVec(new geoCoordinates())).toBe(true)
         
-        const p = vec({x: "num", y: "num", z: "num"})
+        const p = vec({x: "f32", y: "f32", z: "f32"})
         expect(geoCoordinates.isVec(new p())).toBe(false)
         expect(geoCoordinates.isVec(0)).toBe(false)
         expect(geoCoordinates.isVec(null)).toBe(false)
@@ -59,7 +59,7 @@ describe("casting between vec and array", () => {
     })
 
     it("Should be able to create array from vec via spread operator", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const vec1 = new PositionV(5).fill({x: 1, y: 2, z: 3})
         const target = [...vec1]
         expect(target).toEqual(new Array(5).fill({x: 1, y: 2, z: 3}))
@@ -68,7 +68,7 @@ describe("casting between vec and array", () => {
 
 describe("casting between vec memory (float64Array) and vec", () => {
     it("should be able to construct vec from another vec's memory", () => {
-        const Cats = vec({isCool: "num", isDangerous: "num"})
+        const Cats = vec({isCool: "f32", isDangerous: "f32"})
         const cats = new Cats().fill({isCool: 1, isDangerous: 1})
 
         const capacity = cats.capacity
@@ -84,7 +84,7 @@ describe("casting between vec memory (float64Array) and vec", () => {
     })
 
     it("should be able to cast vec into float64array", () => {
-        const Cats = vec({isCool: "num", isDangerous: "num"})
+        const Cats = vec({isCool: "f32", isDangerous: "f32"})
         const cats = new Cats().fill({isCool: 1, isDangerous: 1})
         expect(ArrayBuffer.isView(cats.memory)).toBe(true)
     })

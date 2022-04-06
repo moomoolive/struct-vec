@@ -1,11 +1,11 @@
 import {expect, it, describe} from "@jest/globals"
 import {vec} from "../index"
 
-const Cats = vec({isDangerous: "num", isCool: "num"})
+const Cats = vec({isDangerous: "f32", isCool: "f32"})
 
 describe("automatic memory management", () => {
     it("automatically resizes if capacity is at maximum", () => {
-        const PositionVec = vec({x: "num", y: "num", z: "num"})
+        const PositionVec = vec({x: "f32", y: "f32", z: "f32"})
         const positions = new PositionVec(1)
 
         expect(positions.length).toBe(0)
@@ -77,7 +77,7 @@ describe("manual memory management", () => {
     })
     
     it("shrinkTo method shrinks vec to inputted capcity or no-op if capcity is smaller than input", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(5)
 
         expect(p.capacity).toBe(5)
@@ -105,7 +105,7 @@ describe("manual memory management", () => {
     })
 
     it("reserve method should only expand capacity of array if length + additional is larger than current capacity", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const vec1 = new PositionV(5)
         
         expect(vec1.capacity).toBe(5)

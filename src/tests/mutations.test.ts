@@ -3,7 +3,7 @@ import {vec} from "../index"
 
 describe("mutations", () => {
     it("popping an element should return the target index or undefined if no elements in array", () => {
-        const CustomersV = vec({is_active: "num", payment_plan: "num"})
+        const CustomersV = vec({is_active: "f32", payment_plan: "f32"})
         const customers = new CustomersV()
         customers.push({is_active: 1, payment_plan: 67})
         expect(customers.length).toBe(1)
@@ -29,7 +29,7 @@ describe("mutations", () => {
     })
 
     it("shift method removes the first element and returns it", () => {
-        const PersonV = vec({"id": "num", "age": "num"})
+        const PersonV = vec({"id": "f32", "age": "f32"})
         const persons = new PersonV()
 
         persons.push({id: 1, age: 10})
@@ -56,7 +56,7 @@ describe("mutations", () => {
     })
 
     it("unshift method inserts elements at beginning of array and returns new length", () => {
-        const CatsV = vec({"age": "num", "evilness": "num"})
+        const CatsV = vec({"age": "f32", "evilness": "f32"})
         const cats = new CatsV()
         cats.push(
             {age: Math.fround(1.1), evilness: 500_000},
@@ -106,7 +106,7 @@ describe("mutations", () => {
     })
 
     it("reverse method should reverse the order of a vec items in place an return this same array", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20)
         
         // returns the same array it was performed on
@@ -147,7 +147,7 @@ describe("mutations", () => {
     })
 
     it("truncate should remove the specified number of elements from the back and return new length", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20).fill({x: 1, y: 1, z: 1})
         expect(p.length).toBe(20)
         
@@ -164,7 +164,7 @@ describe("mutations", () => {
 
 describe("fill method", () => {
     it("should fill all arrays element from start index to end index if both are supplied. If end index is greater than capacity then it defaults to capacity", () => {
-        const ProgrammerV = vec({"yearsOfTraining": "num", "averageHoursWorked": "num"})
+        const ProgrammerV = vec({"yearsOfTraining": "f32", "averageHoursWorked": "f32"})
 
         const programmers = new ProgrammerV(50)
 
@@ -202,7 +202,7 @@ describe("fill method", () => {
     })
 
     it("should fill all of array's capacity with inputted element if no start or end index is supplied", () => {
-        const AliensV = vec({"height": "num", "weight": "num", "power": "num"})
+        const AliensV = vec({"height": "f32", "weight": "f32", "power": "f32"})
         const aliens = new AliensV(200)
         expect(aliens.capacity).toBe(200)
         expect(aliens.length).toBe(0)
@@ -216,7 +216,7 @@ describe("fill method", () => {
 
     it("should fill all arrays element from start index to capcity if start index provided. If start index is greater than length then start index defaults to the last element + 1", () => {
 
-        const AliensV = vec({"height": "num", "weight": "num", "power": "num"})
+        const AliensV = vec({"height": "f32", "weight": "f32", "power": "f32"})
         const aliens = new AliensV(200)
         
         expect(aliens.capacity).toBe(200)
@@ -297,7 +297,7 @@ describe("fill method", () => {
 
 describe("splice method", () => {
     it("with only target argument should return a new array with value from the target index to the end of array it was called on and remove them", () => {
-        const Vec3V = vec({x: "num", y: "num", z: "num"})
+        const Vec3V = vec({x: "f32", y: "f32", z: "f32"})
         const v1 = new Vec3V()
 
         v1.push({x: 0, y: 0, z: 200})
@@ -375,7 +375,7 @@ describe("splice method", () => {
     })
 
     it("with a delete count deletes only specified number of items after start", () => {
-        const FrogsV = vec({"sound": "num", "cuteness": "num"})
+        const FrogsV = vec({"sound": "f32", "cuteness": "f32"})
         const frogs = new FrogsV()
 
         frogs.push(
@@ -427,7 +427,7 @@ describe("splice method", () => {
     })
 
     it("with 0 delete count and items to insert returns an empty array and inserts items into array it was called on", () => {
-        const DoggosV = vec({"tail_length": "num", "lovability": "num"})
+        const DoggosV = vec({"tail_length": "f32", "lovability": "f32"})
         const doggos = new DoggosV()
 
         doggos.push(
@@ -493,7 +493,7 @@ describe("splice method", () => {
     })
 
     it("with delete count and items to insert returns array of deleted items and inputs items at index", () => {
-        const DoggosV = vec({"tail_length": "num", "lovability": "num"})
+        const DoggosV = vec({"tail_length": "f32", "lovability": "f32"})
         const doggos = new DoggosV()
 
         // delete count does nothing on empty vec 
@@ -588,7 +588,7 @@ describe("splice method", () => {
 
 describe("concat method", () => {
     it("returns a new vec with elements of inputted vecs (one)", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
 
         const vec1 = new PositionV(5).fill({x: 1, y: 2, z: 3})
         const vec2 = new PositionV(5).fill({x: 1, y: 4, z: 3})
@@ -607,7 +607,7 @@ describe("concat method", () => {
     })
 
     it("returns a new vec with elements of inputted vecs (with none inputted)", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
 
         const vec1 = new PositionV(5).fill({x: 1, y: 2, z: 3})
         const vec4 = vec1.concat()
@@ -621,7 +621,7 @@ describe("concat method", () => {
     })
 
     it("returns a new vec with elements of inputted vecs (with multiple inputted)", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
 
         const vec1 = new PositionV(5).fill({x: 1, y: 2, z: 3})
         const vec2 = new PositionV(5).fill({x: 1, y: 4, z: 3})
@@ -646,7 +646,7 @@ describe("concat method", () => {
 
 describe("copyWithin Method", () => {
     it("copies entire array contents to target if no start or end is specified", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -690,7 +690,7 @@ describe("copyWithin Method", () => {
     })
 
     it("copies entire array contents to target index if no start or end is specified even when negative indexes are used", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -726,7 +726,7 @@ describe("copyWithin Method", () => {
     })
 
     it("starts copy to target index from start if specified and supports negative indexing", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -770,7 +770,7 @@ describe("copyWithin Method", () => {
     })
 
     it("starts copy to target index from start until end index if both are specified", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20)
         p.push({x: 2, y: 3, z: 8})
         p.push({x: 1, y: 3, z: 0})
@@ -824,7 +824,7 @@ describe("copyWithin Method", () => {
 
 describe("slice method", () => {
     it("returns a copy of the entire vec if no arguments are supplied", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20).fill({x: 2, y: 2, z: 2})
         const copy = p.slice()
         expect(copy).not.toBe(p)
@@ -835,7 +835,7 @@ describe("slice method", () => {
     })
 
     it("returns a copy of vec from start index to length - 1 if start is defined and end is undefined", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20).fill({x: 2, y: 2, z: 2})
         const copy = p.slice(4)
         expect(copy.length).toBe(p.length - 4)
@@ -853,7 +853,7 @@ describe("slice method", () => {
     })
 
     it("returns a copy of vec from start index to end if both start and end are defined", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20).fill({x: 2, y: 2, z: 2})
         const copy = p.slice(0, 4)
         expect(copy.length).toBe(4)
@@ -871,7 +871,7 @@ describe("slice method", () => {
     })
 
     it("end argument supports negative indexes", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20).fill({x: 2, y: 2, z: 2})
         const copy = p.slice(5, -7)
         expect(copy.length).toBe(8)
@@ -896,7 +896,7 @@ describe("slice method", () => {
     })
 
     it("start argument supports negative indexes", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20).fill({x: 2, y: 2, z: 2})
         const copy = p.slice(-3, -1)
         expect(copy.length).toBe(2)
@@ -910,7 +910,7 @@ describe("slice method", () => {
     })
 
     it("returns empty vec if either start or end arguments are out of bounds", () => {
-        const PositionV = vec({"x": "num", "y": "num", "z": "num"})
+        const PositionV = vec({"x": "f32", "y": "f32", "z": "f32"})
         const p = new PositionV(20).fill({x: 2, y: 2, z: 2})
         const copy = p.slice(20, -7)
 
@@ -928,7 +928,7 @@ describe("slice method", () => {
 
 describe("sort method", () => {
     it("nothing occurs if length is smaller than 2", () => {
-        const Position = vec({x: "num", y: "num", z: "num"})
+        const Position = vec({x: "f32", y: "f32", z: "f32"})
         const length0 = new Position()
         expect(length0.length).toBe(0)
         const l0ref = length0.sort((_a, _b) => 1)
@@ -944,7 +944,7 @@ describe("sort method", () => {
     })
 
     it("returns correctly sorted array if length is 2", () => {
-        const Position = vec({x: "num", y: "num", z: "num"})
+        const Position = vec({x: "f32", y: "f32", z: "f32"})
         const p = new Position(2)
         p.push(
             {x: 1, z: 1, y: 1},
@@ -964,7 +964,7 @@ describe("sort method", () => {
     })
     
     it("returns correctly sorted array if length is bigger than 2", () => {
-        const Position = vec({x: "num", y: "num", z: "num"})
+        const Position = vec({x: "f32", y: "f32", z: "f32"})
         const p = new Position()
         const elementsLength = 15
         for (let i = 0; i < elementsLength; i += 1) {
@@ -1001,7 +1001,7 @@ describe("sort method", () => {
 
 describe("swap method", () => {
     it("swapping with positive indices works", () => {
-        const Position = vec({x: "num", y: "num", z: "num"})
+        const Position = vec({x: "f32", y: "f32", z: "f32"})
         const p = new Position()
         p.push(
             {x: 1, z: 1, y: 1},
@@ -1013,7 +1013,7 @@ describe("swap method", () => {
     })
 
     it("swapping with negative indices works", () => {
-        const Position = vec({x: "num", y: "num", z: "num"})
+        const Position = vec({x: "f32", y: "f32", z: "f32"})
         const p = new Position()
         p.push(
             {x: 1, z: 1, y: 1},
