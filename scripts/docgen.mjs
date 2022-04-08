@@ -10,8 +10,8 @@ const data = jsdoc2md.getTemplateDataSync({files: "dist/*.js"})
 const rawDocs = jsdoc2md.renderSync({data})
 const importAndAnchorMutations = rawDocs
     .replace(
-        /module_vec-struct.vec/gm,
-        "module_vec-struct.vec_gen",
+        /module_vec-struct..vec/gm,
+        "module_vec-struct..vec_gen",
     )
     .replace(
         /from "struct-vec.js"/gm,

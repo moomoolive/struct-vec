@@ -1,5 +1,5 @@
 import { Vec as BaseVec } from "./core.js";
-import { tokenizeStructDef, ERR_PREFIX, createVecDef, validateCompileOptions } from "./compiler.js";
+import { tokenizeStructDef, ERR_PREFIX, createVecDef, validateCompileOptions, invalidClassName } from "./compiler.js";
 export { Vec } from "./core.js";
 export function validateStructDef(def) {
     try {
@@ -10,21 +10,25 @@ export function validateStructDef(def) {
         return false;
     }
 }
-export function vec(structDef) {
+export function vec(structDef, options = {}) {
     if (typeof SharedArrayBuffer === "undefined") {
         throw new Error(`${ERR_PREFIX} sharedArrayBuffers are not supported in this environment and are required for vecs`);
     }
     const tokens = tokenizeStructDef(structDef);
-    const { def, className } = createVecDef(tokens, structDef, {
+    const { className = "AnonymousVec" } = options;
+    if (invalidClassName(className)) {
+        throw SyntaxError(`inputted class name (className option) is not a valid javascript class name, got "${className}"`);
+    }
+    const { def, className: clsName } = createVecDef(tokens, structDef, {
         lang: "js",
         exportSyntax: "none",
         pathToLib: "none",
-        className: "AnonymousVec",
+        className,
         runtimeCompile: true
     });
     const genericVec = Function(`"use strict";return (Vec) => {
         ${def}
-        return ${className}
+        return ${clsName}
     }`)()(BaseVec);
     return genericVec;
 }

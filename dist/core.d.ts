@@ -30,6 +30,24 @@ export declare const VALID_DATA_TYPES_INTERNAL: readonly ["f32", "i32", "char", 
  */
 export declare class Vec<T extends StructDef> {
     /**
+     * The definition of an individual
+     * struct (element) in a vec class.
+     * @type {Readonly<StructDef>}
+     */
+    static readonly def: StructDef;
+    /**
+     * The amount of raw memory an individual
+     * struct (element of a vec) requires for vecs of this class.
+     * An individual block of memory corresponds to
+     * 4 bytes (32-bits).
+     *
+     * For example if ```elementSize``` is 2, each struct
+     * will take 8 bytes.
+     *
+     * @type {Readonly<number>}
+     */
+    static readonly elementSize: number;
+    /**
     * Checks if input is a of Vec type.
     *
     * If using the static method on generated

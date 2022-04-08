@@ -10,7 +10,7 @@
     "test:lib": "jest --runInBand ./src",
     "test:codegen": "node ./codegenTests/codegen.mjs && node --experimental-vm-modules node_modules/jest/bin/jest.js --runInBand --config=./codegenTests/jest.config.mjs ./codegenTests",
     "test:watch": "jest --runInBand --watchAll ./src",
-    "test:dev": "jest --runInBand ./src/tests/generation",
+    "test:dev": "jest --runInBand ./src/tests/naming",
     "bench:node": "node ./benchmarks/public/index.mjs",
     "bench:web": "nodemon ./benchmarks/server.mjs",
     "bench:deno": "deno run --allow-read benchmarks/public/index.mjs",

@@ -22,6 +22,7 @@ declare type StructDefToken = {
     }[];
 };
 export declare function tokenizeStructDef(def: any): StructDefToken;
+export declare function invalidClassName(name: string): boolean;
 export declare function validateCompileOptions(input: any): void;
 declare type DefOptions = {
     lang: "js" | "ts";

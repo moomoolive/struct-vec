@@ -2242,3 +2242,21 @@ class Vec {
     }
 }
 exports.Vec = Vec;
+/**
+ * The definition of an individual
+ * struct (element) in a vec class.
+ * @type {Readonly<StructDef>}
+ */
+Vec.def = {};
+/**
+ * The amount of raw memory an individual
+ * struct (element of a vec) requires for vecs of this class.
+ * An individual block of memory corresponds to
+ * 4 bytes (32-bits).
+ *
+ * For example if ```elementSize``` is 2, each struct
+ * will take 8 bytes.
+ *
+ * @type {Readonly<number>}
+ */
+Vec.elementSize = 0;

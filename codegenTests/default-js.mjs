@@ -3,6 +3,8 @@ import {Vec} from "../dist"
  * @extends {Vec<{"x":"bool","y":"f32","z":"char"}>}
  */
 class DefaultJs extends Vec {
+    static def  = {"x":"bool","y":"f32","z":"char"}
+    static elementSize  = 3
     static Cursor = class Cursor {
         _viewingIndex = 0
         constructor(self) { this.self = self }

@@ -20,6 +20,37 @@ describe("field name restrictions", () => {
     })
 })
 
+describe("class naming restrictions", () => {
+    it("if class name is a js reserved keyword an error should be thrown", () => {
+        expect(() => {vec({a: "i32"}, {className: "await"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "for"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "let"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "const"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "while"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "if"})}).toThrow()
+    })
+
+    it("if class name does not follow naming convention for variables an error should be thrown", () => {
+        expect(() => {vec({a: "i32"}, {className: "my class"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "my-class"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "1class"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "cl@ss"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "#class"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "class&"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "class*"})}).toThrow()
+    })
+
+    it("if class name has unicode characters an error should be thrown", () => {
+        expect(() => {vec({a: "i32"}, {className: "myclass😙"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "my🏊‍♂️class"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "❤️class"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "cl💀ss"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "🔥class"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "class😂"})}).toThrow()
+        expect(() => {vec({a: "i32"}, {className: "✔️"})}).toThrow()
+    })
+})
+
 describe("schema restrictions", () => {
     it("inputting a non-object (including arrays & null) into schema field throws error", () => {
         expect(() => {vec(null as unknown as StructDef)}).toThrow()

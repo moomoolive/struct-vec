@@ -13,6 +13,8 @@ describe("generated vec classes have all the standard methods and properties", (
         expect(typeof NamedTs.fromMemory).toBe("function")
         expect(typeof NamedTs.fromString).toBe("function")
         expect(typeof NamedTs.isVec).toBe("function")
+        expect(NamedTs.def).toEqual(structdef)
+        expect(NamedTs.elementSize).toBe(3)
         const v = new NamedTs(15).fill({
             x: true, y: 10, z: "a"
         })
@@ -69,6 +71,8 @@ describe("generated vec classes have all the standard methods and properties", (
         expect(typeof NamedJs.fromMemory).toBe("function")
         expect(typeof NamedJs.fromString).toBe("function")
         expect(typeof NamedJs.isVec).toBe("function")
+        expect(NamedJs.def).toEqual(structdef)
+        expect(NamedJs.elementSize).toBe(3)
         const v = new NamedJs(15).fill({
             x: true, y: 10, z: "a"
         })
@@ -125,6 +129,8 @@ describe("generated vec classes have all the standard methods and properties", (
         expect(typeof defaultTs.DefaultTs.fromMemory).toBe("function")
         expect(typeof defaultTs.DefaultTs.fromString).toBe("function")
         expect(typeof defaultTs.DefaultTs.isVec).toBe("function")
+        expect(defaultTs.DefaultTs.def).toEqual(structdef)
+        expect(defaultTs.DefaultTs.elementSize).toBe(3)
         const v = new defaultTs.DefaultTs(15).fill({
             x: true, y: 10, z: "a"
         })
@@ -181,6 +187,8 @@ describe("generated vec classes have all the standard methods and properties", (
         expect(typeof defaultJs.DefaultJs.fromMemory).toBe("function")
         expect(typeof defaultJs.DefaultJs.fromString).toBe("function")
         expect(typeof defaultJs.DefaultJs.isVec).toBe("function")
+        expect(defaultJs.DefaultJs.def).toEqual(structdef)
+        expect(defaultJs.DefaultJs.elementSize).toBe(3)
         const v = new defaultJs.DefaultJs(15).fill({
             x: true, y: 10, z: "a"
         })

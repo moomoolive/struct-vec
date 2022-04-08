@@ -738,3 +738,5 @@ export class Vec {
         this._i32Memory = new Int32Array(memory.buffer);
     }
 }
+Vec.def = {};
+Vec.elementSize = 0;

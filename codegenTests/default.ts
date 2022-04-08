@@ -1,6 +1,8 @@
 import {Vec, StructDef, Struct, CursorConstructor} from "../dist"
 
 class DefaultTs extends Vec<{"x":"bool","y":"f32","z":"char"}> {
+    static readonly def : StructDef = {"x":"bool","y":"f32","z":"char"}
+    static readonly elementSize : number = 3
     protected static Cursor = class Cursor {
         _viewingIndex = 0
 		self: Vec<{"x":"bool","y":"f32","z":"char"}>

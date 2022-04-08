@@ -55,10 +55,10 @@ This package attempts to solve this problem by allowing you to define data struc
   - [Parallel Loop](#parallel-loop)
   - [Pushing Elements](#pushing-elements)
 - [API Reference](#api-reference)
-  - [Vec](#module_vec-struct.Vec)
-  - [validateStructDef](#module_vec-struct.validateStructDef)
-  - [vec](#module_vec-struct.vec_gen)
-  - [vecCompile](#module_vec-struct.vec_gencompile)
+  - [Vec](#module_vec-struct..Vec)
+  - [validateStructDef](#module_vec-struct..validateStructDef)
+  - [vec](#module_vec-struct..vec_gen)
+  - [vecCompile](#module_vec-struct..vec_gencompile)
 
 ## Examples
 
@@ -528,7 +528,7 @@ If one sets a `f32` field with an incorrect type (`String` type for example), th
 
 #### i32
 
-A [32-bit signed integer](https://www.ibm.com/docs/en/aix/7.2?topic=types-signed-unsigned-integers), takes 4 bytes (32 bits) of memory. Similar to javascript's `Number` type, but without the ability to carry decimals. [`int` type](https://www.learnc.net/c-tutorial/c-integer/).
+A [32-bit signed integer](https://www.ibm.com/docs/en/aix/7.2?topic=types-signed-unsigned-integers), takes 4 bytes (32 bits) of memory. Similar to javascript's `Number` type, but without the ability to carry decimals. Also similar to C's [`int` type](https://www.learnc.net/c-tutorial/c-integer/).
 
 To define a `i32` field:
 ```js
@@ -991,14 +991,6 @@ Test machine was a Windows 11/WSL-Ubuntu 20.04 (x64), with a Intel i7-9750H CPU 
 
 All of these tests are micro benchmarks which rarely tell the entire truth about performance, but can give you an idea on what to expect from vecs in terms of performance.
 
-### Benchmarks Summary
-
-- [Iterating over a vec is nearly as fast as iterating over a buffer](#imperative-loop)
-- [Vec iterators like `ForEach` are nearly as fast as imperative loops, in most javascript environments](#foreach-loop)
-- [Vec ES6 iterators are really slow](#es6-iterator-loop)
-- [Parallel iteration over vecs results in performance improvements you would expect from multithreading](#parallel-loop)
-- [Preallocating memory before pushing many elements onto vec improves performance quite a bit](#pushing-elements)
-
 ### Iteration
 #### Imperative loop
 
@@ -1272,13 +1264,15 @@ Taken on ```March 31, 2022```
             * [.swap(aIndex, bIndex)](#module_vec-struct..Vec+swap) ⇒ <code>Vec.&lt;StructDef&gt;</code>
             * [.toJSON()](#module_vec-struct..Vec+toJSON) ⇒ <code>string</code>
         * _static_
+            * [.def](#module_vec-struct..Vec.def) : <code>Readonly.&lt;StructDef&gt;</code>
+            * [.elementSize](#module_vec-struct..Vec.elementSize) : <code>Readonly.&lt;number&gt;</code>
             * [.isVec(candidate)](#module_vec-struct..Vec.isVec) ⇒ <code>boolean</code>
             * [.fromMemory(memory)](#module_vec-struct..Vec.fromMemory) ⇒ <code>Vec.&lt;StructDef&gt;</code>
             * [.fromArray(structArray)](#module_vec-struct..Vec.fromArray) ⇒ <code>Vec.&lt;StructDef&gt;</code>
             * [.fromString(vecString)](#module_vec-struct..Vec.fromString) ⇒ <code>Vec.&lt;StructDef&gt;</code>
     * [~validateStructDef(def)](#module_vec-struct..validateStructDef) ⇒ <code>boolean</code>
-    * [~vec(structDef)](#module_vec-struct..vec) ⇒ <code>VecClass.&lt;StructDef&gt;</code>
-    * [~vecCompile(structDef, pathToLib, [options])](#module_vec-struct..vecCompile) ⇒ <code>string</code>
+    * [~vec(structDef, [options])](#module_vec-struct..vec_gen) ⇒ <code>VecClass.&lt;StructDef&gt;</code>
+    * [~vecCompile(structDef, pathToLib, [options])](#module_vec-struct..vec_genCompile) ⇒ <code>string</code>
 
 <a name="module_vec-struct..Vec"></a>
 
@@ -1346,6 +1340,8 @@ is type ```Vec<T extends StructDef>```
         * [.swap(aIndex, bIndex)](#module_vec-struct..Vec+swap) ⇒ <code>Vec.&lt;StructDef&gt;</code>
         * [.toJSON()](#module_vec-struct..Vec+toJSON) ⇒ <code>string</code>
     * _static_
+        * [.def](#module_vec-struct..Vec.def) : <code>Readonly.&lt;StructDef&gt;</code>
+        * [.elementSize](#module_vec-struct..Vec.elementSize) : <code>Readonly.&lt;number&gt;</code>
         * [.isVec(candidate)](#module_vec-struct..Vec.isVec) ⇒ <code>boolean</code>
         * [.fromMemory(memory)](#module_vec-struct..Vec.fromMemory) ⇒ <code>Vec.&lt;StructDef&gt;</code>
         * [.fromArray(structArray)](#module_vec-struct..Vec.fromArray) ⇒ <code>Vec.&lt;StructDef&gt;</code>
@@ -2638,6 +2634,25 @@ jsonVec.forEach(pos => {
      console.log(pos.e) // output: {x: 1, y: 1, z: 1}
 })
 ```
+<a name="module_vec-struct..Vec.def"></a>
+
+#### Vec.def : <code>Readonly.&lt;StructDef&gt;</code>
+The definition of an individual
+struct (element) in a vec class.
+
+**Kind**: static property of [<code>Vec</code>](#module_vec-struct..Vec)  
+<a name="module_vec-struct..Vec.elementSize"></a>
+
+#### Vec.elementSize : <code>Readonly.&lt;number&gt;</code>
+The amount of raw memory an individual
+struct (element of a vec) requires for vecs of this class.
+An individual block of memory corresponds to
+4 bytes (32-bits).
+
+For example if ```elementSize``` is 2, each struct
+will take 8 bytes.
+
+**Kind**: static property of [<code>Vec</code>](#module_vec-struct..Vec)  
 <a name="module_vec-struct..Vec.isVec"></a>
 
 #### Vec.isVec(candidate) ⇒ <code>boolean</code>
@@ -2820,9 +2835,9 @@ console.log(validateStructDef({x: {y: "f32"}})) // output: false
 console.log(validateStructDef({x: "f32"})) // output: true
 console.log(validateStructDef({code: "f32"})) // output: true
 ```
-<a name="module_vec-struct..vec"></a>
+<a name="module_vec-struct..vec_gen"></a>
 
-### vec-struct~vec(structDef) ⇒ <code>VecClass.&lt;StructDef&gt;</code>
+### vec-struct~vec(structDef, [options]) ⇒ <code>VecClass.&lt;StructDef&gt;</code>
 A vec compiler that can be used at runtime.
 Creates class definitions for growable array-like
 data structure (known as a vector or vec for short) that
@@ -2846,9 +2861,11 @@ created, unlike normal arrays.
 **Returns**: <code>VecClass.&lt;StructDef&gt;</code> - A class that creates vecs which conform
 to inputted def  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| structDef | <code>StructDef</code> | a type definition for the elements to be carried by an instance of the generated vec class |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| structDef | <code>StructDef</code> |  | a type definition for the elements to be carried by an instance of the generated vec class |
+| [options] | <code>Object</code> |  |  |
+| [options.className] | <code>string</code> | <code>&quot;AnonymousVec&quot;</code> | the value of the generated class's `name` property. Useful for debugging |
 
 **Example** *(Basic Usage)*  
 ```js
@@ -2866,7 +2883,7 @@ const geo = new geoCoordinates(15).fill({latitude: 1, longitude: 1})
 const errClass = vec(null) // SyntaxError
 const errClass2 = vec({x: "unknownType"}) // SyntaxError
 ```
-<a name="module_vec-struct..vecCompile"></a>
+<a name="module_vec-struct..vec_genCompile"></a>
 
 ### vec-struct~vecCompile(structDef, pathToLib, [options]) ⇒ <code>string</code>
 A vec compiler that can be used at build time.
@@ -2900,7 +2917,7 @@ created, unlike normal arrays.
 | [options] | <code>Object</code> |  |  |
 | [options.bindings] | <code>&quot;js&quot;</code> \| <code>&quot;ts&quot;</code> | <code>&quot;js&quot;</code> | what language should vec class be generated in. Choose either "js" (javascript) or "ts" (typescript). Defaults to "js". |
 | [options.exportSyntax] | <code>&quot;none&quot;</code> \| <code>&quot;named&quot;</code> \| <code>&quot;default&quot;</code> | <code>&quot;none&quot;</code> | what es6 export syntax should class be generated with. Choose either "none" (no import statement with class), "named" (use the "export" syntax), or "default" (use "export default" syntax). Defaults to "none". |
-| [options.className] | <code>string</code> | <code>&quot;\&quot;AnonymousVec\&quot;&quot;</code> | the name of the generated vec class. Defaults to "AnonymousVec". |
+| [options.className] | <code>string</code> | <code>&quot;AnonymousVec&quot;</code> | the name of the generated vec class. Defaults to "AnonymousVec". |
 
 **Example** *(Basic Usage)*  
 ```js

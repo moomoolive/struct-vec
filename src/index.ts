@@ -5,7 +5,7 @@
 // imports should be one line only => for build system
 import {Vec as BaseVec} from "./core"
 import type {StructDef, Struct, ReadonlyInt32Array} from "./core"
-import {tokenizeStructDef, ERR_PREFIX, createVecDef, validateCompileOptions} from "./compiler"
+import {tokenizeStructDef, ERR_PREFIX, createVecDef, validateCompileOptions, invalidClassName} from "./compiler"
 
 export {Vec} from "./core"
 export type {CursorConstructor, VecCursor, ReadonlyInt32Array, } from "./core"
@@ -75,6 +75,9 @@ export function validateStructDef(def: any): boolean {
  * @param {StructDef} structDef a type definition for the elements
  * to be carried by an instance of the generated vec
  * class
+ * @param {Object} [options]
+ * @param {string} [options.className=AnonymousVec] the value
+ * of the generated class's `name` property. Useful for debugging
  * @returns {VecClass<StructDef>} A class that creates vecs which conform
  * to inputted def
  * 
@@ -96,22 +99,31 @@ export function validateStructDef(def: any): boolean {
  * ```
  */
 export function vec<S extends StructDef>(
-    structDef: S
+    structDef: S,
+    options: {
+        className?: string
+    } = {}
 ): VecClass<S> {
     if (typeof SharedArrayBuffer === "undefined") {
         throw new Error(`${ERR_PREFIX} sharedArrayBuffers are not supported in this environment and are required for vecs`)
     }
     const tokens = tokenizeStructDef(structDef)
-    const {def, className} = createVecDef(tokens, structDef, {
+    const {
+        className = "AnonymousVec"
+    } = options
+    if (invalidClassName(className)) {
+        throw SyntaxError(`inputted class name (className option) is not a valid javascript class name, got "${className}"`)
+    }
+    const {def, className: clsName} = createVecDef(tokens, structDef, {
         lang: "js",
         exportSyntax: "none",
         pathToLib: "none",
-        className: "AnonymousVec",
+        className,
         runtimeCompile: true
     })
     const genericVec = Function(`"use strict";return (Vec) => {
         ${def}
-        return ${className}
+        return ${clsName}
     }`)()(BaseVec)
     return genericVec
 }
@@ -153,7 +165,7 @@ export function vec<S extends StructDef>(
  * "none" (no import statement with class), "named" (use
  * the "export" syntax), or "default" (use "export default"
  * syntax). Defaults to "none".
- * @param {string} [options.className="AnonymousVec"] the name of the generated
+ * @param {string} [options.className=AnonymousVec] the name of the generated
  * vec class. Defaults to "AnonymousVec".
  * @returns {string} a string rendition of vec class
  * 
@@ -213,6 +225,25 @@ export function vecCompile(
 }
 
 export interface VecClass<T extends StructDef> {
+    /**
+     * The definition of an individual 
+     * struct (element) in a vec class.
+     * @type {StructDef}  
+     */ 
+    readonly def: StructDef
+
+     /**
+      * The amount of raw memory an individual
+      * struct (element of a vec) requires for vecs of this class.
+      * An individual block of memory corresponds to
+      * 4 bytes (32-bits).
+      * 
+      * For example if ```elementSize``` is 2, each struct
+      * will take 8 bytes.
+      * 
+      * @type {number}
+      */
+    readonly elementSize: number
     /**
      * Checks if input is a of Vec type.
      * 

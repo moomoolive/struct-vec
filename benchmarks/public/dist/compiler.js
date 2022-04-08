@@ -184,6 +184,11 @@ function reservedJsKeyword(word) {
             return false;
     }
 }
+export function invalidClassName(name) {
+    return (!validVariableName(name)
+        || reservedJsKeyword(name)
+        || name.length < 1);
+}
 export function validateCompileOptions(input) {
     if (typeof input !== "object"
         || input === null
@@ -195,9 +200,7 @@ export function validateCompileOptions(input) {
         throw TypeError("option 'pathToLib' missing");
     }
     if (typeof input.className !== "string"
-        || !validVariableName(input.className)
-        || reservedJsKeyword(input.className)
-        || input.className.length < 1) {
+        || invalidClassName(input.className)) {
         throw SyntaxError(`inputted class name is not a valid javascript class name, got "${input.className}"`);
     }
     switch (input.exportSyntax) {
@@ -236,6 +239,8 @@ ${ts || runtimeCompile
  * @extends {Vec${generic}}
  */`}
 ${exportSyntax === "named" ? "export " : ""}class ${className} extends Vec${ts ? generic : ""} {
+    static ${ts ? "readonly " : ""}def ${ts ? ": StructDef" : ""} = ${def}
+    static ${ts ? "readonly " : ""}elementSize ${ts ? ": number" : ""} = ${elementSize}
     ${ts ? "protected " : ""}static Cursor = class Cursor {
         _viewingIndex = 0${ts ? "\n\t\tself: Vec" + generic : ""}
         constructor(self${ts ? ": Vec" + generic : ""}) { this.self = self }
