@@ -286,7 +286,7 @@ export function createVecDef(
     const generic = `<${def}>`
     const libPath = `"${pathToLib}"`
     const importStatement = `import {Vec${
-        ts ? ", StructDef, Struct, CursorConstructor" : ""
+        ts ? ", StructDef, Struct, CursorConstructor, VecCursor, DetachedVecCursor" : ""
     }} from ${libPath}`
     const CursorConstructor = "CursorConstructor" + generic 
     const memory = ts ? 
@@ -308,15 +308,17 @@ ${ts || runtimeCompile
 ${
     exportSyntax === "named" ? "export " : ""
 }class ${className} extends Vec${ts ? generic : ""} {
-    static ${ts ? "readonly " : ""}def ${ts ? ": StructDef" : ""} = ${def}
-    static ${ts ? "readonly " : ""}elementSize ${ts ? ": number" : ""} = ${elementSize}
-    ${ts ? "protected " : ""}static Cursor = class Cursor {
-        _viewingIndex = 0${
-            ts ? "\n\t\tself: Vec" + generic : ""
+    static ${ts ? "readonly " : ""}def${ts ? ": StructDef" : ""} = ${def}
+    static ${ts ? "readonly " : ""}elementSize${ts ? ": number" : ""} = ${elementSize}
+    ${ts ? "protected " : ""}static Cursor = class ${className}Cursor {
+        ${
+            ts ? `_viewingIndex: number\n\t\tself: Vec${generic}` : ""
         }
         constructor(self${
             ts ? ": Vec" + generic : ""
-        }) { this.self = self }
+        }, index${
+            ts ? ": number" : ""
+        }) { this.self = self;this._viewingIndex = index}
         ${float32Fields.map(({field, offset}) => {
             const fieldOffset = offset < 1 ? "" : (" + " + offset.toString())
             const base = `${memory}[this._viewingIndex${fieldOffset}]`
@@ -367,7 +369,9 @@ ${
             fieldNames.map((field) => {
                 return field + ": this." + field
             }).join(", ")
-        }} }        
+        }} }
+        get ref()${ts ? `: VecCursor${generic}`: ""} { return new ${className}.Cursor(this.self, this._viewingIndex) }
+        index(index${ts ? ": number" : ""})${ts? `: DetachedVecCursor${generic}` : ""} { this._viewingIndex = index * this.self.elementSize; return this }
     }${ts ? " as " + CursorConstructor : ""}
     get elementSize()${ts ? ": number" : ""} { return ${elementSize} }
     get def()${ts ? ": StructDef" : ""} { return ${def} }

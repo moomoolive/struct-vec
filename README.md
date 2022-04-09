@@ -381,7 +381,10 @@ const p = new PositionV(20).fill({x: 1, y: 1, z: 1})
 
 // cast to string
 const vecString = p.toJSON()
+// can be casted to string like so as well
+const vecString1 = JSON.stringify(p)
 console.log(typeof vecString) // output: "string"
+console.log(vecString1 === vecString) // output: true
 // create vec from string
 const jsonVec = PositionV.fromString(vecString)
 
@@ -1263,6 +1266,7 @@ Taken on ```March 31, 2022```
             * [.sort(compareFn)](#module_vec-struct..Vec+sort) ⇒ <code>Vec.&lt;StructDef&gt;</code>
             * [.swap(aIndex, bIndex)](#module_vec-struct..Vec+swap) ⇒ <code>Vec.&lt;StructDef&gt;</code>
             * [.toJSON()](#module_vec-struct..Vec+toJSON) ⇒ <code>string</code>
+            * [.detachedCursor(index)](#module_vec-struct..Vec+detachedCursor) ⇒ <code>DetachedVecCursor</code>
         * _static_
             * [.def](#module_vec-struct..Vec.def) : <code>Readonly.&lt;StructDef&gt;</code>
             * [.elementSize](#module_vec-struct..Vec.elementSize) : <code>Readonly.&lt;number&gt;</code>
@@ -1339,6 +1343,7 @@ is type ```Vec<T extends StructDef>```
         * [.sort(compareFn)](#module_vec-struct..Vec+sort) ⇒ <code>Vec.&lt;StructDef&gt;</code>
         * [.swap(aIndex, bIndex)](#module_vec-struct..Vec+swap) ⇒ <code>Vec.&lt;StructDef&gt;</code>
         * [.toJSON()](#module_vec-struct..Vec+toJSON) ⇒ <code>string</code>
+        * [.detachedCursor(index)](#module_vec-struct..Vec+detachedCursor) ⇒ <code>DetachedVecCursor</code>
     * _static_
         * [.def](#module_vec-struct..Vec.def) : <code>Readonly.&lt;StructDef&gt;</code>
         * [.elementSize](#module_vec-struct..Vec.elementSize) : <code>Readonly.&lt;number&gt;</code>
@@ -2633,6 +2638,49 @@ console.log(jsonVec.length) // output: 20
 jsonVec.forEach(pos => {
      console.log(pos.e) // output: {x: 1, y: 1, z: 1}
 })
+```
+<a name="module_vec-struct..Vec+detachedCursor"></a>
+
+#### vec.detachedCursor(index) ⇒ <code>DetachedVecCursor</code>
+Creates an cursor that can be used to inspect/mutate
+a vec, independent of the vec. It has
+identical functionality as the ```Vec.index``` method,
+expect that you can use it without the vec.
+
+**Kind**: instance method of [<code>Vec</code>](#module_vec-struct..Vec)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| index | <code>number</code> | what index should the cursor initially point at |
+
+**Example** *(Basic Usage)*  
+```js
+import {vec} from "struct-vec"
+
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+const p = new PositionV()
+p.push(
+     {x: 1, y: 1, z: 1},
+     {x: 2, y: 2, z: 2},
+     {x: 3, y: 3, z: 3},
+)
+
+// create a cursor and point it at index
+// 0
+const cursorA = p.detachedCursor(0)
+// create a cursor and point it at index
+// 1
+const cursorB = p.detachedCursor(1)
+
+console.log(cursorA.e) // {x: 1, y: 1, z: 1}
+console.log(cursorB.e) // {x: 2, y: 2, z: 2}
+console.log(p.index(2).e) // {x: 3, y: 3, z: 3}
+
+// works like the "index" method of vecs
+// but can be used independantly
+cursorA.index(2).x = 55
+console.log(p.index(2).e) // {x: 55, y: 3, z: 3}
+console.log(cursorA.e) // {x: 55, y: 3, z: 3}
 ```
 <a name="module_vec-struct..Vec.def"></a>
 

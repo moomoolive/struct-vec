@@ -4,7 +4,8 @@
 import { Vec as BaseVec } from "./core";
 import type { StructDef, Struct, ReadonlyInt32Array } from "./core";
 export { Vec } from "./core";
-export type { CursorConstructor, VecCursor, ReadonlyInt32Array, } from "./core";
+export type { CursorConstructor, VecCursor, ReadonlyInt32Array } from "./core";
+export type { DetachedVecCursor } from "./core";
 export type { SortCompareCallback, MapCallback } from "./core";
 export type { ForEachCallback, ReduceCallback } from "./core";
 export type { MapvCallback, TruthyIterCallback } from "./core";

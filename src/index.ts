@@ -8,7 +8,8 @@ import type {StructDef, Struct, ReadonlyInt32Array} from "./core"
 import {tokenizeStructDef, ERR_PREFIX, createVecDef, validateCompileOptions, invalidClassName} from "./compiler"
 
 export {Vec} from "./core"
-export type {CursorConstructor, VecCursor, ReadonlyInt32Array, } from "./core"
+export type {CursorConstructor, VecCursor, ReadonlyInt32Array} from "./core"
+export type {DetachedVecCursor} from "./core"
 
 // Iterator callbacks
 export type {SortCompareCallback, MapCallback} from "./core"

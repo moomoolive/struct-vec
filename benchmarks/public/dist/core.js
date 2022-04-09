@@ -25,7 +25,7 @@ export class Vec {
             this._i32Memory = new Int32Array(buffer);
             this._length = vecLength;
             this._capacity = vecCapacity;
-            this._cursor = new this.cursorDef(this);
+            this._cursor = new this.cursorDef(this, 0);
         }
         catch (err) {
             throw new Error(`[Vec::allocator] buffer memory failed to initialize. ${err}`);
@@ -644,7 +644,7 @@ export class Vec {
         if (this._length < 2) {
             return this;
         }
-        const helperCursor = new this.cursorDef(this);
+        const helperCursor = new this.cursorDef(this, 0);
         this.reserve(1);
         const elementSize = this.elementSize;
         const temporaryIndex = this._length * elementSize;
@@ -700,6 +700,9 @@ export class Vec {
         }
         memoryStr += `${this.elementSize},${this._capacity},${this._length}]`;
         return memoryStr;
+    }
+    detachedCursor(index) {
+        return new this.cursorDef(this, index);
     }
     createMemory(capacity) {
         const elementsMemory = (MEMORY_LAYOUT.BYTES_PER_ELEMENT

@@ -1575,6 +1575,47 @@ export declare class Vec<T extends StructDef> {
      * ```
      */
     toJSON(): string;
+    /**
+     * Creates an cursor that can be used to inspect/mutate
+     * a vec, independent of the vec. It has
+     * identical functionality as the ```Vec.index``` method,
+     * expect that you can use it without the vec.
+     *
+     * @param {number} index what index should the cursor
+     * initially point at
+     * @returns {DetachedVecCursor}
+     *
+     * @example <caption>Basic Usage</caption>
+     * ```js
+     * import {vec} from "struct-vec"
+     *
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+     * const p = new PositionV()
+     * p.push(
+     *      {x: 1, y: 1, z: 1},
+     *      {x: 2, y: 2, z: 2},
+     *      {x: 3, y: 3, z: 3},
+     * )
+     *
+     * // create a cursor and point it at index
+     * // 0
+     * const cursorA = p.detachedCursor(0)
+     * // create a cursor and point it at index
+     * // 1
+     * const cursorB = p.detachedCursor(1)
+     *
+     * console.log(cursorA.e) // {x: 1, y: 1, z: 1}
+     * console.log(cursorB.e) // {x: 2, y: 2, z: 2}
+     * console.log(p.index(2).e) // {x: 3, y: 3, z: 3}
+     *
+     * // works like the "index" method of vecs
+     * // but can be used independantly
+     * cursorA.index(2).x = 55
+     * console.log(p.index(2).e) // {x: 55, y: 3, z: 3}
+     * console.log(cursorA.e) // {x: 55, y: 3, z: 3}
+     * ```
+     */
+    detachedCursor(index: number): DetachedVecCursor<T>;
     private createMemory;
     private shrinkCapacity;
     private deallocateExcessMemory;
@@ -1598,11 +1639,15 @@ export interface ReadonlyInt32Array extends Omit<Int32Array, TypedArrayMutablePr
 }
 export declare type VecCursor<T extends StructDef> = (Struct<T> & {
     e: Struct<T>;
+    ref: VecCursor<T>;
+});
+export declare type DetachedVecCursor<T extends StructDef> = (VecCursor<T> & {
+    index: (index: number) => DetachedVecCursor<T>;
 });
 export declare type CursorConstructor<T extends StructDef> = {
-    new (self: Vec<T>): VecCursorInternals<T>;
+    new (self: Vec<T>, index: number): VecCursorInternals<T>;
 };
-declare type VecCursorInternals<T extends StructDef> = (VecCursor<T> & {
+declare type VecCursorInternals<T extends StructDef> = (DetachedVecCursor<T> & {
     _viewingIndex: number;
     self: Vec<T>;
 });

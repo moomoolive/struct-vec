@@ -285,7 +285,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
             this._i32Memory = new Int32Array(buffer)
             this._length = vecLength
             this._capacity = vecCapacity
-            this._cursor = new this.cursorDef(this)
+            this._cursor = new this.cursorDef(this, 0)
         } catch (err) {
             throw new Error(`[Vec::allocator] buffer memory failed to initialize. ${err}`)
         }
@@ -2189,7 +2189,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
         if (this._length < 2) {
             return this
         }
-        const helperCursor = new this.cursorDef(this)
+        const helperCursor = new this.cursorDef(this, 0)
         this.reserve(1)
         const elementSize = this.elementSize
         const temporaryIndex = this._length * elementSize
@@ -2356,6 +2356,49 @@ export const VALID_DATA_TYPES_INTERNAL = [
         memoryStr += `${this.elementSize},${this._capacity},${this._length}]`
         return memoryStr
     }
+    /**
+     * Creates an cursor that can be used to inspect/mutate
+     * a vec, independent of the vec. It has
+     * identical functionality as the ```Vec.index``` method,
+     * expect that you can use it without the vec.
+     * 
+     * @param {number} index what index should the cursor
+     * initially point at
+     * @returns {DetachedVecCursor}
+     * 
+     * @example <caption>Basic Usage</caption>
+     * ```js
+     * import {vec} from "struct-vec.ts"
+     * 
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+     * const p = new PositionV()
+     * p.push(
+     *      {x: 1, y: 1, z: 1},
+     *      {x: 2, y: 2, z: 2},
+     *      {x: 3, y: 3, z: 3},
+     * )
+     * 
+     * 
+     * 
+     * const cursorA = p.detachedCursor(0)
+     * 
+     * 
+     * const cursorB = p.detachedCursor(1)
+     * 
+     * console.log(cursorA.e) 
+     * console.log(cursorB.e) 
+     * console.log(p.index(2).e) 
+     * 
+     * 
+     * 
+     * cursorA.index(2).x = 55
+     * console.log(p.index(2).e) 
+     * console.log(cursorA.e) 
+     * ```
+     */
+    detachedCursor(index: number): DetachedVecCursor<T> {
+        return new this.cursorDef(this, index)
+    }
     private createMemory(capacity: number): SharedArrayBuffer {
         const elementsMemory = (
             MEMORY_LAYOUT.BYTES_PER_ELEMENT
@@ -2443,13 +2486,22 @@ export interface ReadonlyInt32Array extends Omit<
 }
 export type VecCursor<T extends StructDef> = (
     Struct<T> 
-    & {e: Struct<T>}
+    & {
+        e: Struct<T>,
+        ref: VecCursor<T>
+    }
 )
+export type DetachedVecCursor<T extends StructDef> = (
+    VecCursor<T> 
+    & {
+        index: (index: number) => DetachedVecCursor<T>
+    }
+) 
 export type CursorConstructor<T extends StructDef> = {
-    new (self: Vec<T>): VecCursorInternals<T>
+    new (self: Vec<T>, index: number): VecCursorInternals<T>
 }
 type VecCursorInternals<T extends StructDef> = (
-    VecCursor<T> 
+    DetachedVecCursor<T> 
     & {
         _viewingIndex: number
         self: Vec<T>
