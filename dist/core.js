@@ -52,28 +52,23 @@ class Vec {
      * ```
      */
     constructor(initialCapacity = 15 /* capacity */, memory) {
-        try {
-            let vecCapacity = 0;
-            let vecLength = 0;
-            let buffer;
-            if (!memory) {
-                vecCapacity = Math.abs(initialCapacity);
-                buffer = this.createMemory(vecCapacity);
-            }
-            else {
-                vecLength = memory[memory.length - 1 /* lengthReverseIndex */];
-                vecCapacity = memory[memory.length - 2 /* capacityReverseIndex */];
-                buffer = memory.buffer;
-            }
-            this._f32Memory = new Float32Array(buffer);
-            this._i32Memory = new Int32Array(buffer);
-            this._length = vecLength;
-            this._capacity = vecCapacity;
-            this._cursor = new this.cursorDef(this, 0);
+        let vecCapacity = 0;
+        let vecLength = 0;
+        let buffer;
+        if (!memory) {
+            vecCapacity = Math.abs(initialCapacity);
+            buffer = this.createMemory(vecCapacity);
         }
-        catch (err) {
-            throw new Error(`[Vec::allocator] buffer memory failed to initialize. ${err}`);
+        else {
+            vecLength = memory[memory.length - 1 /* lengthReverseIndex */];
+            vecCapacity = memory[memory.length - 2 /* capacityReverseIndex */];
+            buffer = memory.buffer;
         }
+        this._f32Memory = new Float32Array(buffer);
+        this._i32Memory = new Int32Array(buffer);
+        this._length = vecLength;
+        this._capacity = vecCapacity;
+        this._cursor = new this.cursorDef(this, 0);
     }
     /**
     * Checks if input is a of Vec type.
@@ -1314,30 +1309,24 @@ class Vec {
      * ```
      */
     reserve(additional) {
-        try {
-            const elementSize = this.elementSize;
-            const length = this._length;
-            const capacity = this._capacity;
-            if (length + additional <= capacity) {
-                return;
-            }
-            const newCapacity = length + additional;
-            const elementsMemory = (MEMORY_LAYOUT.BYTES_PER_ELEMENT
-                * elementSize
-                * newCapacity);
-            const bufferSize = (8 /* encodingBytes */
-                + elementsMemory);
-            const buffer = new BUFFER_TYPE(bufferSize);
-            const memory = new MEMORY_LAYOUT(buffer);
-            memory.set(this._f32Memory);
-            this.replaceMemory(memory);
-            this._capacity = newCapacity;
-            return this;
+        const elementSize = this.elementSize;
+        const length = this._length;
+        const capacity = this._capacity;
+        if (length + additional <= capacity) {
+            return;
         }
-        catch (err) {
-            console.error(`Vec ::allocator: runtime failed to allocate more memory for vec. Aborting operation`, err);
-            throw err;
-        }
+        const newCapacity = length + additional;
+        const elementsMemory = (MEMORY_LAYOUT.BYTES_PER_ELEMENT
+            * elementSize
+            * newCapacity);
+        const bufferSize = (8 /* encodingBytes */
+            + elementsMemory);
+        const buffer = new BUFFER_TYPE(bufferSize);
+        const memory = new MEMORY_LAYOUT(buffer);
+        memory.set(this._f32Memory);
+        this.replaceMemory(memory);
+        this._capacity = newCapacity;
+        return this;
     }
     /**
      * Reverses an vec in place. The first vec
@@ -1627,25 +1616,20 @@ class Vec {
         const capacity = this._capacity;
         const minimumCapcity = length + structs.length;
         if (minimumCapcity > capacity) {
-            try {
-                const targetCapacity = capacity * 2;
-                const newCapacity = minimumCapcity > targetCapacity
-                    ? minimumCapcity + 15 /* capacity */
-                    : targetCapacity;
-                const elementsMemory = (MEMORY_LAYOUT.BYTES_PER_ELEMENT
-                    * elementSize
-                    * newCapacity);
-                const bufferSize = (8 /* encodingBytes */
-                    + elementsMemory);
-                const buffer = new BUFFER_TYPE(bufferSize);
-                const memory = new MEMORY_LAYOUT(buffer);
-                memory.set(this._f32Memory);
-                this.replaceMemory(memory);
-                this._capacity = newCapacity;
-            }
-            catch (err) {
-                throw new Error(`[Vec::allocator] runtime failed to allocate more memory for vec. ${err}`);
-            }
+            const targetCapacity = capacity * 2;
+            const newCapacity = minimumCapcity > targetCapacity
+                ? minimumCapcity + 15 /* capacity */
+                : targetCapacity;
+            const elementsMemory = (MEMORY_LAYOUT.BYTES_PER_ELEMENT
+                * elementSize
+                * newCapacity);
+            const bufferSize = (8 /* encodingBytes */
+                + elementsMemory);
+            const buffer = new BUFFER_TYPE(bufferSize);
+            const memory = new MEMORY_LAYOUT(buffer);
+            memory.set(this._f32Memory);
+            this.replaceMemory(memory);
+            this._capacity = newCapacity;
         }
         const previousIndex = this._cursor._viewingIndex;
         for (let i = 0; i < structs.length; i += 1) {
@@ -1970,24 +1954,18 @@ class Vec {
      * ```
      */
     shrinkTo(minCapacity = 15 /* capacity */) {
-        try {
-            const elementSize = this.elementSize;
-            const length = this._length;
-            const capacity = this._capacity;
-            const minCapacityNormalize = minCapacity < 0
-                ? 0
-                : minCapacity;
-            const newCapacity = length + minCapacityNormalize;
-            if (newCapacity >= capacity) {
-                return this;
-            }
-            this._f32Memory = this.shrinkCapacity(newCapacity);
-            this._capacity = newCapacity;
+        const length = this._length;
+        const capacity = this._capacity;
+        const minCapacityNormalize = minCapacity < 0
+            ? 0
+            : minCapacity;
+        const newCapacity = length + minCapacityNormalize;
+        if (newCapacity >= capacity) {
             return this;
         }
-        catch (err) {
-            throw new Error(`[Vec::allocator] runtime failed to deallocate memory for vec. ${err}`);
-        }
+        this._f32Memory = this.shrinkCapacity(newCapacity);
+        this._capacity = newCapacity;
+        return this;
     }
     /**
      * Sorts the elements of an array in place and

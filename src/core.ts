@@ -282,26 +282,22 @@ export const VALID_DATA_TYPES_INTERNAL = [
         initialCapacity: number = defaults.capacity,
         memory?: ReadonlyInt32Array
     ) {
-        try {
-            let vecCapacity = 0
-            let vecLength = 0
-            let buffer: SharedArrayBuffer
-            if (!memory) {
-                vecCapacity = Math.abs(initialCapacity)
-                buffer = this.createMemory(vecCapacity)
-            } else {
-                vecLength = memory[memory.length - encoding.lengthReverseIndex]
-                vecCapacity = memory[memory.length - encoding.capacityReverseIndex]
-                buffer = memory.buffer as SharedArrayBuffer
-            }
-            this._f32Memory = new Float32Array(buffer)
-            this._i32Memory = new Int32Array(buffer)
-            this._length = vecLength
-            this._capacity = vecCapacity
-            this._cursor = new this.cursorDef(this, 0)
-        } catch (err) {
-            throw new Error(`[Vec::allocator] buffer memory failed to initialize. ${err}`)
+        let vecCapacity = 0
+        let vecLength = 0
+        let buffer: SharedArrayBuffer
+        if (!memory) {
+            vecCapacity = Math.abs(initialCapacity)
+            buffer = this.createMemory(vecCapacity)
+        } else {
+            vecLength = memory[memory.length - encoding.lengthReverseIndex]
+            vecCapacity = memory[memory.length - encoding.capacityReverseIndex]
+            buffer = memory.buffer as SharedArrayBuffer
         }
+        this._f32Memory = new Float32Array(buffer)
+        this._i32Memory = new Int32Array(buffer)
+        this._length = vecLength
+        this._capacity = vecCapacity
+        this._cursor = new this.cursorDef(this, 0)
     }
 
     /**
@@ -1430,33 +1426,28 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```
      */
     reserve(additional: number) {
-        try {
-            const elementSize = this.elementSize
-            const length = this._length
-            const capacity = this._capacity
-            if (length + additional <= capacity) {
-                return
-            }
-            const newCapacity = length + additional
-            const elementsMemory = (
-                MEMORY_LAYOUT.BYTES_PER_ELEMENT
-                * elementSize
-                * newCapacity
-            )
-            const bufferSize = (
-                encoding.encodingBytes
-                + elementsMemory
-            )
-            const buffer = new BUFFER_TYPE(bufferSize)
-            const memory = new MEMORY_LAYOUT(buffer)
-            memory.set(this._f32Memory)
-            this.replaceMemory(memory)
-            this._capacity = newCapacity
-            return this
-        } catch (err) {
-            console.error(`Vec ::allocator: runtime failed to allocate more memory for vec. Aborting operation`, err)
-            throw err
+        const elementSize = this.elementSize
+        const length = this._length
+        const capacity = this._capacity
+        if (length + additional <= capacity) {
+            return
         }
+        const newCapacity = length + additional
+        const elementsMemory = (
+            MEMORY_LAYOUT.BYTES_PER_ELEMENT
+            * elementSize
+            * newCapacity
+        )
+        const bufferSize = (
+            encoding.encodingBytes
+            + elementsMemory
+        )
+        const buffer = new BUFFER_TYPE(bufferSize)
+        const memory = new MEMORY_LAYOUT(buffer)
+        memory.set(this._f32Memory)
+        this.replaceMemory(memory)
+        this._capacity = newCapacity
+        return this
     }
 
     /**
@@ -1784,28 +1775,24 @@ export const VALID_DATA_TYPES_INTERNAL = [
         const capacity = this._capacity
         const minimumCapcity = length + structs.length
         if (minimumCapcity > capacity) {
-            try {
-                const targetCapacity = capacity * 2
-                const newCapacity = minimumCapcity > targetCapacity
-                    ? minimumCapcity + defaults.capacity
-                    : targetCapacity
-                const elementsMemory = (
-                    MEMORY_LAYOUT.BYTES_PER_ELEMENT
-                    * elementSize
-                    * newCapacity
-                )
-                const bufferSize = (
-                    encoding.encodingBytes
-                    + elementsMemory
-                )
-                const buffer = new BUFFER_TYPE(bufferSize)
-                const memory = new MEMORY_LAYOUT(buffer)
-                memory.set(this._f32Memory)
-                this.replaceMemory(memory)
-                this._capacity = newCapacity
-            } catch (err) {
-                throw new Error(`[Vec::allocator] runtime failed to allocate more memory for vec. ${err}`)
-            }
+            const targetCapacity = capacity * 2
+            const newCapacity = minimumCapcity > targetCapacity
+                ? minimumCapcity + defaults.capacity
+                : targetCapacity
+            const elementsMemory = (
+                MEMORY_LAYOUT.BYTES_PER_ELEMENT
+                * elementSize
+                * newCapacity
+            )
+            const bufferSize = (
+                encoding.encodingBytes
+                + elementsMemory
+            )
+            const buffer = new BUFFER_TYPE(bufferSize)
+            const memory = new MEMORY_LAYOUT(buffer)
+            memory.set(this._f32Memory)
+            this.replaceMemory(memory)
+            this._capacity = newCapacity
         }
         const previousIndex = this._cursor._viewingIndex
         for (let i = 0; i < structs.length; i += 1) {
@@ -2162,23 +2149,18 @@ export const VALID_DATA_TYPES_INTERNAL = [
     shrinkTo(
         minCapacity: number = defaults.capacity
     ): Vec<T> {
-        try {
-            const elementSize = this.elementSize
-            const length = this._length
-            const capacity = this._capacity
-            const minCapacityNormalize = minCapacity < 0 
-                ? 0 
-                : minCapacity
-            const newCapacity = length + minCapacityNormalize
-            if (newCapacity >= capacity) {
-                return this
-            }
-            this._f32Memory = this.shrinkCapacity(newCapacity)
-            this._capacity = newCapacity
+        const length = this._length
+        const capacity = this._capacity
+        const minCapacityNormalize = minCapacity < 0 
+            ? 0 
+            : minCapacity
+        const newCapacity = length + minCapacityNormalize
+        if (newCapacity >= capacity) {
             return this
-        } catch (err) {
-            throw new Error(`[Vec::allocator] runtime failed to deallocate memory for vec. ${err}`)
         }
+        this._f32Memory = this.shrinkCapacity(newCapacity)
+        this._capacity = newCapacity
+        return this
     }
 
     /**
