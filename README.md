@@ -298,7 +298,7 @@ for (const element of positions) {
 
 #### Nested Loops
 
-Due to some limitations, vecs usually [can only point to one element at a time](#indexing-does-not-return-element). To overcome this we can use a [`detachedCursor`](#indexing-does-not-return-element) or a [`ref`](#default_struct_field_ref).
+Due to some limitations, vecs usually [can only point to one element at a time](#indexing-does-not-return-element). To overcome a [`detachedCursor`](#indexing-does-not-return-element) or [`ref`](#default_struct_field_ref) can be used.
 
 ```js
 import {vec} from "struct-vec"
@@ -563,7 +563,7 @@ console.log(cats.index(0).e) // output: {cuteness: 2_876, isDangerous: true, emo
 <a name="default_struct_field_ref"></a>
 
 `ref`: returns a reference to an index in a vec.
-- these references refer to an index in a vec NOT the element at the index. Meaning that if the underlying element is moved, the reference will not longer point to it and potentially [dangle](https://practice.geeksforgeeks.org/problems/what-is-dangling-reference).
+- these references refer to an index in a vec NOT the element at the index. Meaning that if the underlying element is moved, the reference will no longer point to it and potentially [dangle](https://practice.geeksforgeeks.org/problems/what-is-dangling-reference).
 
 ```js
 import {vec} from "struct-vec"
