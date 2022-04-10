@@ -45,7 +45,24 @@ export const VALID_DATA_TYPES_INTERNAL = [
  * is type ```Vec<T extends StructDef>```
  */
  export class Vec<T extends StructDef> {
-    
+    /**
+     * The definition of an individual 
+     * struct (element) in a vec class.
+     * @type {Readonly<StructDef>}  
+     */ 
+    static readonly def: StructDef = {}
+    /**
+     * The amount of raw memory an individual
+     * struct (element of a vec) requires for vecs of this class.
+     * An individual block of memory corresponds to
+     * 4 bytes (32-bits).
+     * 
+     * For example if ```elementSize``` is 2, each struct
+     * will take 8 bytes.
+     * 
+     * @type {Readonly<number>}
+     */
+    static readonly elementSize: number = 0
      /**
      * Checks if input is a of Vec type.
      * 
@@ -252,26 +269,22 @@ export const VALID_DATA_TYPES_INTERNAL = [
         initialCapacity: number = defaults.capacity,
         memory?: ReadonlyInt32Array
     ) {
-        try {
-            let vecCapacity = 0
-            let vecLength = 0
-            let buffer: SharedArrayBuffer
-            if (!memory) {
-                vecCapacity = Math.abs(initialCapacity)
-                buffer = this.createMemory(vecCapacity)
-            } else {
-                vecLength = memory[memory.length - encoding.lengthReverseIndex]
-                vecCapacity = memory[memory.length - encoding.capacityReverseIndex]
-                buffer = memory.buffer as SharedArrayBuffer
-            }
-            this._f32Memory = new Float32Array(buffer)
-            this._i32Memory = new Int32Array(buffer)
-            this._length = vecLength
-            this._capacity = vecCapacity
-            this._cursor = new this.cursorDef(this)
-        } catch (err) {
-            throw new Error(`[Vec::allocator] buffer memory failed to initialize. ${err}`)
+        let vecCapacity = 0
+        let vecLength = 0
+        let buffer: SharedArrayBuffer
+        if (!memory) {
+            vecCapacity = Math.abs(initialCapacity)
+            buffer = this.createMemory(vecCapacity)
+        } else {
+            vecLength = memory[memory.length - encoding.lengthReverseIndex]
+            vecCapacity = memory[memory.length - encoding.capacityReverseIndex]
+            buffer = memory.buffer as SharedArrayBuffer
         }
+        this._f32Memory = new Float32Array(buffer)
+        this._i32Memory = new Int32Array(buffer)
+        this._length = vecLength
+        this._capacity = vecCapacity
+        this._cursor = new this.cursorDef(this, 0)
     }
     /**
      * The amount of raw memory an individual
@@ -1370,33 +1383,28 @@ export const VALID_DATA_TYPES_INTERNAL = [
      * ```
      */
     reserve(additional: number) {
-        try {
-            const elementSize = this.elementSize
-            const length = this._length
-            const capacity = this._capacity
-            if (length + additional <= capacity) {
-                return
-            }
-            const newCapacity = length + additional
-            const elementsMemory = (
-                MEMORY_LAYOUT.BYTES_PER_ELEMENT
-                * elementSize
-                * newCapacity
-            )
-            const bufferSize = (
-                encoding.encodingBytes
-                + elementsMemory
-            )
-            const buffer = new BUFFER_TYPE(bufferSize)
-            const memory = new MEMORY_LAYOUT(buffer)
-            memory.set(this._f32Memory)
-            this.replaceMemory(memory)
-            this._capacity = newCapacity
-            return this
-        } catch (err) {
-            console.error(`Vec ::allocator: runtime failed to allocate more memory for vec. Aborting operation`, err)
-            throw err
+        const elementSize = this.elementSize
+        const length = this._length
+        const capacity = this._capacity
+        if (length + additional <= capacity) {
+            return
         }
+        const newCapacity = length + additional
+        const elementsMemory = (
+            MEMORY_LAYOUT.BYTES_PER_ELEMENT
+            * elementSize
+            * newCapacity
+        )
+        const bufferSize = (
+            encoding.encodingBytes
+            + elementsMemory
+        )
+        const buffer = new BUFFER_TYPE(bufferSize)
+        const memory = new MEMORY_LAYOUT(buffer)
+        memory.set(this._f32Memory)
+        this.replaceMemory(memory)
+        this._capacity = newCapacity
+        return this
     }
     /**
      * Reverses an vec in place. The first vec 
@@ -1711,28 +1719,24 @@ export const VALID_DATA_TYPES_INTERNAL = [
         const capacity = this._capacity
         const minimumCapcity = length + structs.length
         if (minimumCapcity > capacity) {
-            try {
-                const targetCapacity = capacity * 2
-                const newCapacity = minimumCapcity > targetCapacity
-                    ? minimumCapcity + defaults.capacity
-                    : targetCapacity
-                const elementsMemory = (
-                    MEMORY_LAYOUT.BYTES_PER_ELEMENT
-                    * elementSize
-                    * newCapacity
-                )
-                const bufferSize = (
-                    encoding.encodingBytes
-                    + elementsMemory
-                )
-                const buffer = new BUFFER_TYPE(bufferSize)
-                const memory = new MEMORY_LAYOUT(buffer)
-                memory.set(this._f32Memory)
-                this.replaceMemory(memory)
-                this._capacity = newCapacity
-            } catch (err) {
-                throw new Error(`[Vec::allocator] runtime failed to allocate more memory for vec. ${err}`)
-            }
+            const targetCapacity = capacity * 2
+            const newCapacity = minimumCapcity > targetCapacity
+                ? minimumCapcity + defaults.capacity
+                : targetCapacity
+            const elementsMemory = (
+                MEMORY_LAYOUT.BYTES_PER_ELEMENT
+                * elementSize
+                * newCapacity
+            )
+            const bufferSize = (
+                encoding.encodingBytes
+                + elementsMemory
+            )
+            const buffer = new BUFFER_TYPE(bufferSize)
+            const memory = new MEMORY_LAYOUT(buffer)
+            memory.set(this._f32Memory)
+            this.replaceMemory(memory)
+            this._capacity = newCapacity
         }
         const previousIndex = this._cursor._viewingIndex
         for (let i = 0; i < structs.length; i += 1) {
@@ -2072,23 +2076,18 @@ export const VALID_DATA_TYPES_INTERNAL = [
     shrinkTo(
         minCapacity: number = defaults.capacity
     ): Vec<T> {
-        try {
-            const elementSize = this.elementSize
-            const length = this._length
-            const capacity = this._capacity
-            const minCapacityNormalize = minCapacity < 0 
-                ? 0 
-                : minCapacity
-            const newCapacity = length + minCapacityNormalize
-            if (newCapacity >= capacity) {
-                return this
-            }
-            this._f32Memory = this.shrinkCapacity(newCapacity)
-            this._capacity = newCapacity
+        const length = this._length
+        const capacity = this._capacity
+        const minCapacityNormalize = minCapacity < 0 
+            ? 0 
+            : minCapacity
+        const newCapacity = length + minCapacityNormalize
+        if (newCapacity >= capacity) {
             return this
-        } catch (err) {
-            throw new Error(`[Vec::allocator] runtime failed to deallocate memory for vec. ${err}`)
         }
+        this._f32Memory = this.shrinkCapacity(newCapacity)
+        this._capacity = newCapacity
+        return this
     }
     /**
      * Sorts the elements of an array in place and 
@@ -2172,7 +2171,7 @@ export const VALID_DATA_TYPES_INTERNAL = [
         if (this._length < 2) {
             return this
         }
-        const helperCursor = new this.cursorDef(this)
+        const helperCursor = new this.cursorDef(this, 0)
         this.reserve(1)
         const elementSize = this.elementSize
         const temporaryIndex = this._length * elementSize
@@ -2339,6 +2338,49 @@ export const VALID_DATA_TYPES_INTERNAL = [
         memoryStr += `${this.elementSize},${this._capacity},${this._length}]`
         return memoryStr
     }
+    /**
+     * Creates an cursor that can be used to inspect/mutate
+     * a vec, independent of the vec. It has
+     * identical functionality as the ```Vec.index``` method,
+     * expect that you can use it without the vec.
+     * 
+     * @param {number} index what index should the cursor
+     * initially point at
+     * @returns {DetachedVecCursor}
+     * 
+     * @example <caption>Basic Usage</caption>
+     * ```js
+     * import {vec} from "struct-vec.ts"
+     * 
+     * const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+     * const p = new PositionV()
+     * p.push(
+     *      {x: 1, y: 1, z: 1},
+     *      {x: 2, y: 2, z: 2},
+     *      {x: 3, y: 3, z: 3},
+     * )
+     * 
+     * 
+     * 
+     * const cursorA = p.detachedCursor(0)
+     * 
+     * 
+     * const cursorB = p.detachedCursor(1)
+     * 
+     * console.log(cursorA.e) 
+     * console.log(cursorB.e) 
+     * console.log(p.index(2).e) 
+     * 
+     * 
+     * 
+     * cursorA.index(2).x = 55
+     * console.log(p.index(2).e) 
+     * console.log(cursorA.e) 
+     * ```
+     */
+    detachedCursor(index: number): DetachedVecCursor<T> {
+        return new this.cursorDef(this, index)
+    }
     private createMemory(capacity: number): SharedArrayBuffer {
         const elementsMemory = (
             MEMORY_LAYOUT.BYTES_PER_ELEMENT
@@ -2426,13 +2468,22 @@ export interface ReadonlyInt32Array extends Omit<
 }
 export type VecCursor<T extends StructDef> = (
     Struct<T> 
-    & {e: Struct<T>}
+    & {
+        e: Struct<T>,
+        ref: VecCursor<T>
+    }
 )
+export type DetachedVecCursor<T extends StructDef> = (
+    VecCursor<T> 
+    & {
+        index: (index: number) => DetachedVecCursor<T>
+    }
+) 
 export type CursorConstructor<T extends StructDef> = {
-    new (self: Vec<T>): VecCursorInternals<T>
+    new (self: Vec<T>, index: number): VecCursorInternals<T>
 }
 type VecCursorInternals<T extends StructDef> = (
-    VecCursor<T> 
+    DetachedVecCursor<T> 
     & {
         _viewingIndex: number
         self: Vec<T>

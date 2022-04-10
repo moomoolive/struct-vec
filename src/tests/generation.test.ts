@@ -430,6 +430,26 @@ describe("bool data type", () => {
     })
 })
 
+describe("class debug tools", () => {
+    it("class should have element size and definition accessible via static variables", () => {
+        const def = {a: "i32", b: "i32"} as const
+        const VecClass = vec(def)
+        expect(VecClass.def).toEqual(def)
+        expect(VecClass.elementSize).toBe(2)
+    })
+
+    it("vec class should return with inputted classname if specified", () => {
+        const VecClass = vec({a: "i32", b: "i32"}, {
+            className: "RandomVec"
+        })
+        expect(VecClass.name).toEqual("RandomVec")
+        const VecClass2 = vec({a: "i32", b: "i32"}, {
+            className: "MyVec"
+        })
+        expect(VecClass2.name).toEqual("MyVec")
+    })
+})
+
 
 describe("char data type", () => {
     it("single char field generated correctly", () => {

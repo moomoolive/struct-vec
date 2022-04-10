@@ -65,6 +65,9 @@ exports.validateStructDef = validateStructDef;
  * @param {StructDef} structDef a type definition for the elements
  * to be carried by an instance of the generated vec
  * class
+ * @param {Object} [options]
+ * @param {string} [options.className=AnonymousVec] the value
+ * of the generated class's `name` property. Useful for debugging
  * @returns {VecClass<StructDef>} A class that creates vecs which conform
  * to inputted def
  *
@@ -85,21 +88,25 @@ exports.validateStructDef = validateStructDef;
  * const errClass2 = vec({x: "unknownType"}) // SyntaxError
  * ```
  */
-function vec(structDef) {
+function vec(structDef, options = {}) {
     if (typeof SharedArrayBuffer === "undefined") {
         throw new Error(`${compiler_1.ERR_PREFIX} sharedArrayBuffers are not supported in this environment and are required for vecs`);
     }
     const tokens = (0, compiler_1.tokenizeStructDef)(structDef);
-    const { def, className } = (0, compiler_1.createVecDef)(tokens, structDef, {
+    const { className = "AnonymousVec" } = options;
+    if ((0, compiler_1.invalidClassName)(className)) {
+        throw SyntaxError(`inputted class name (className option) is not a valid javascript class name, got "${className}"`);
+    }
+    const { def, className: clsName } = (0, compiler_1.createVecDef)(tokens, structDef, {
         lang: "js",
         exportSyntax: "none",
         pathToLib: "none",
-        className: "AnonymousVec",
+        className,
         runtimeCompile: true
     });
     const genericVec = Function(`"use strict";return (Vec) => {
         ${def}
-        return ${className}
+        return ${clsName}
     }`)()(core_1.Vec);
     return genericVec;
 }
@@ -141,7 +148,7 @@ exports.vec = vec;
  * "none" (no import statement with class), "named" (use
  * the "export" syntax), or "default" (use "export default"
  * syntax). Defaults to "none".
- * @param {string} [options.className="AnonymousVec"] the name of the generated
+ * @param {string} [options.className=AnonymousVec] the name of the generated
  * vec class. Defaults to "AnonymousVec".
  * @returns {string} a string rendition of vec class
  *
