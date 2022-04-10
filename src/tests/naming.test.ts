@@ -17,6 +17,9 @@ describe("field name restrictions", () => {
     it("defining structs that include field names which conflict with any of the standard methods or properties throws error", () => {
         expect(() => {vec({e: "f32"})}).toThrow()
         expect(() => {vec({self: "f32"})}).toThrow()
+        expect(() => {vec({ref: "f32"})}).toThrow()
+        expect(() => {vec({_viewingIndex: "f32"})}).toThrow()
+        expect(() => {vec({index: "f32"})}).toThrow()
     })
 })
 

@@ -10,7 +10,9 @@
 
 Efficiently communicating between js workers is a pain because you are forced either to pass data by [structured cloning](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm) or represent your data as raw buffers. Structured cloning isn't ideal for performance because it requires de-serialization/serialization every time you pass a message, and raw buffers aren't ideal for productivity because they are esoteric and hard to work with.
 
-This package attempts to solve this problem by allowing you to define data structures called `Vecs`. `Vecs` provide an API is similar to javascript `Arrays`, but are completely backed by `SharedArrayBuffers` - thus can be passed between workers at zero-cost, while still being intuitive to work with with. 
+This package attempts to solve this problem by allowing you to define data structures called `Vecs`. `Vecs` provide an API is similar to javascript `Arrays`, but are completely backed by `SharedArrayBuffers` - thus can be passed between workers at zero-cost, while still being intuitive to work with with.
+
+This package was inspired by [Google's FlatBuffers](https://google.github.io/flatbuffers/), [Rust's std::Vec](https://doc.rust-lang.org/std/vec/struct.Vec.html), and [@bnaya/objectbuffer](https://github.com/Bnaya/objectbuffer) package.
 
 ## Table of Contents
 
@@ -39,7 +41,6 @@ This package attempts to solve this problem by allowing you to define data struc
   - [Build-time Compiler](#build-time-compiler)
 - [Caveats](#caveats)
   - [Indexing does not Return Element](#indexing-does-not-return-element)
-  - [Elements of a Vec are not Reference Types](#elements-of-a-vec-are-not-reference-types)
   - [Indexing out of Bounds](#indexing-out-of-bounds)
   - [Do Not Mutate Vec Length or Capacity during Multithreading](#do-not-mutate-vec-length-or-capacity-during-multithreading)
 - [Performance Tips](#performance-tips)
@@ -63,6 +64,10 @@ This package attempts to solve this problem by allowing you to define data struc
 ## Examples
 
 ### Quick Start
+
+```bash
+npm i struct-vec
+```
 
 ```js
 import {vec} from "struct-vec"
@@ -97,6 +102,9 @@ positions.forEach(pos => {
     console.log(pos.e) // output: {x: 1, y: 1, z: 1}
 })
 
+// get a reference to an index
+const firstElement = positions.index(0).ref
+
 // remove elements
 const allElements = positions.length
 for (let i = 0; i < allElements; i++) {
@@ -130,42 +138,42 @@ console.log(fromMemory.capacity) // output: 15_000
 
 ### Indexing
 
-Indexing into a vec (using the `index` method) is similar to calling `next` method on an iterator. Calling `myVec.index(0)` takes you to the first element but [doesn't actually return the element](#indexing-does-not-return-element).
-
-If none of that makes sense just remember this, whenever you wish to operate on an element in a vec (get the value or set it), reference a specific field of the element NOT the entire element.
+Whenever you wish to operate on an element in a vec (get the value or set it), reference a specific field of the element [NOT the entire element](#indexing-does-not-return-element).
 
 #### Getting Values at an Index
 
-If you want the value of an element, refer to one of it's fields (`yourElement.x` for example) or reference the `e` field to get the entire element [by value](#elements-of-a-vec-are-not-reference-types) ([The `e` field is is auto-generated](#default-struct-fields) for all struct defs).
+If you want the value of an element, refer to one of it's fields (`yourElement.x` for example), the `e` field to get the entire element [by value](#default_struct_field_e), or the `ref` field to get a [reference](#default_struct_field_ref) ([The `e` and `ref` fields are auto-generated](#default-struct-fields) for all struct defs).
 
 ```js
 import {vec} from "struct-vec"
 
 const PositionV = vec({x: "f32", y: "f32", z: "f32"})
 const positions = new PositionV()
-
 positions.push({x: 1, y: 2, z: 3})
 
 // 🛑 "wrongValue" doesn't equal {x: 1, y: 2, z: 3}
 const wrongValue = positions.index(0)
 
-// ✅ "correctValue" equals {x: 1, y: 2, z: 3}
-const correctValue = positions.index(0).e
-// ✅ "xValue" equals 1 
-const xValue = positions.index(0).x
-// ✅ "yValue" equals 2 
-const yValue = positions.index(0).y
-// ✅ "zValue" equals 3 
-const zValue = positions.index(0).z
-// ✅ also works
+// ✅ refer to one the fields
 const {x, y, z} = positions.index(0)
+console.log(x, y, z) // output: 1 2 3
+
+// ✅ get entire element by value
+const correctValue = positions.index(0).e
+console.log(correctValue) // output: {x: 1, y: 2, z: 3}
+
+// ✅ get a reference to index
+const first = positions.index(0).ref
+console.log(first.x, first.y, first.z) // output: 1 2 3
+
 // ✅ array destructuring is allowed as well
 const [element] = positions
+console.log(element) // output: {x: 1, y: 2, z: 3}
 ```
 
 #### Setting Values at an Index
 
-If you want to set the value of an element, refer to one of it's fields (`yourElement.x = 2` for example) or reference the `e` field to set the entire element([The `e` field is is auto-generated](#default-struct-fields) for all struct defs).
+If you want to set the value of an element, refer to one of it's fields (`yourElement.x = 2` for example) or reference the [`e` field](#default_struct_field_e) to set the entire element ([The `e` field is auto-generated](#default-struct-fields) for all struct defs). Both these methods work for [references](#default_struct_field_ref) as well.
 
 ```js
 import {vec} from "struct-vec"
@@ -187,19 +195,38 @@ cats.push({
 cats.index(0) = {
      cuteness: 2_876, 
      isDangerous: true, 
-     emoji: "😸"
+     emoji: "🐆"
 }
 
-// ✅ works
+// ✅ refer to one the fields
+cats.index(0).cuteness = 2_876
+cats.index(0).isDangerous = true
+cats.index(0).emoji = "🐆"
+const {cuteness, emoji, isDangerous} = cats.index(0)
+console.log(cuteness, emoji, isDangerous) // output: 2876 true 🐆
+
+// ✅ set entire element at once
 cats.index(0).e = {
      cuteness: 2_876, 
      isDangerous: true, 
-     emoji: "😸"
+     emoji: "🐆"
 }
-// ✅ this is fine as well
-cats.index(0).cuteness = 2_876
-cats.index(0).isDangerous = true
-cats.index(0).emoji = "😸"
+console.log(cats.index(0).e) // output: {cuteness: 2_876, isDangerous: true, emoji: "🐆"}
+
+// ✅ works for references as well
+const first = cats.index(0).ref
+
+first.cuteness = 2_876
+first.isDangerous = true
+first.emoji = "🐆"
+console.log(first.cuteness, first.emoji, first.isDangerous) // output: 2876 true 🐆
+
+first.e = {
+     cuteness: 2_876, 
+     isDangerous: true, 
+     emoji: "🐆"
+}
+console.log(first.e) // output: {cuteness: 2_876, isDangerous: true, emoji: "🐆"}
 ```
 
 ### Adding Elements
@@ -266,6 +293,34 @@ for (const element of positions) {
   element.x = 20
   element.y = 5
   element.z = element.x + element.y
+}
+```
+
+#### Nested Loops
+
+Due to some limitations, vecs usually [can only point to one element at a time](#indexing-does-not-return-element). To overcome this we can use a [`detachedCursor`](#indexing-does-not-return-element) or a [`ref`](#default_struct_field_ref).
+
+```js
+import {vec} from "struct-vec"
+
+const PositionV = vec({x: "f32", y: "f32", z: "f32"})
+const positions = new PositionV(5).fill({x: 1, y: 1, z: 1})
+
+// create a cursor initially pointing at index 0
+const innnerCursor = positions.detachedCursor(0)
+for (let i = 0; i < positions.length; i++) {
+     const outerEl = positions.index(i)
+     for (let x = 0; x < vec.length; x++) {
+          const innerEl = extraCursor.index(x)
+          
+          if (innerEl.x === outerEl.x) {
+               console.log("same x")
+          } else if (innerEl.y === outerEl.y) {
+               console.log("same y")
+          } else if (innerEl.z === outerEl.z) {
+               console.log("same z")
+          }
+     }
 }
 ```
 
@@ -473,7 +528,11 @@ const monsterDef = {isScary: "bool", power: "i32"}
 
 Every struct, regardless of definition has some auto-generated fields. Auto-generated fields are:
 
-`e` : this field allows you to get and set an entire element at once.
+<a name="default_struct_field_e"></a>
+
+`e` : allows you to get and set an entire element.
+- calling `.e` on an element returns the element by value not by reference. [See `ref`](#default_struct_field_e) to get element by reference.
+
 ```js
 import {vec} from "struct-vec"
 
@@ -499,6 +558,35 @@ cats.index(0).e = {
      emoji: "🐈‍⬛"
 }
 console.log(cats.index(0).e) // output: {cuteness: 2_876, isDangerous: true, emoji: "🐈‍⬛"}
+```
+
+<a name="default_struct_field_ref"></a>
+
+`ref`: returns a reference to an index in a vec.
+- these references refer to an index in a vec NOT the element at the index. Meaning that if the underlying element is moved, the reference will not longer point to it and potentially [dangle](https://practice.geeksforgeeks.org/problems/what-is-dangling-reference).
+
+```js
+import {vec} from "struct-vec"
+
+const Enemy = vec({power: "i32", isDead: "bool"})
+const orcs = new Enemy()
+orcs.push(
+     {power: 55, isDead: false},
+     {power: 13, isDead: false},
+     {power: 72, isDead: false},
+)
+// get a reference to index 0
+const firstElement = orcs.index(0).ref
+console.log(orcs.index(2).e) // output: {power: 72, isDead: false},
+console.log(firstElement.e) // output: {power: 55, isDead: false}
+
+// if underlying element of a ref moves 
+// it does not move with it
+orcs.swap(0, 1)
+console.log(firstElement.e) // output: {power: 13, isDead: false}
+
+// ✅ references can create other references
+const firstElementRef = firstElement.ref
 ```
 
 ### Data types
@@ -552,11 +640,11 @@ console.log(v.index(0).num) // output: 2
 
 [![access-speed-num](https://img.shields.io/badge/%F0%9F%9A%80%20Access%20Speed-Great-brightgreen)](https://shields.io/)
 
-This data type very fast in terms of access speed as it maps exactly to a native javascript type.  
+[same as f32](#f32) 
 
 [![type-safety-num](https://img.shields.io/badge/%F0%9F%AA%B2%20Type%20Saftey-info-blue)](https://shields.io/) 
 
-If one sets a `i32` field with an incorrect type (`String` type for example), the field will be set to `NaN`. There a couple of exceptions to this rule, such as if the incorrect type is `null`, an `Array`, a `BigInt`, a `Symbol`, or a `Boolean` which will either throw a runtime error, set the field to 0 or 1, depending on the type and javascript engine.
+[same as f32](#f32) 
 
 
 #### bool
@@ -587,7 +675,7 @@ When a `bool` field is set with an incorrect type (`Number` type for example), t
 
 #### char
 
-One valid [unicode 14.0.0](http://www.unicode.org/versions/Unicode14.0.0/) character, takes 8 bytes (64 bits). The `char` type is NOT the same as the javascript's `String` type, as the `char` type is restricted to exactly one character.
+One valid [unicode 14.0.0](http://www.unicode.org/versions/Unicode14.0.0/) character, takes 4 bytes (32 bits). Same as javascript's `String` type, except that it is restricted to exactly one character.
 
 To define a `char` field:
 ```js
@@ -604,7 +692,7 @@ console.log(v.index(0).char) // output: "a"
 
 [![access-speed-char](https://img.shields.io/badge/%F0%9F%9A%80%20Access%20Speed-Bad-yellow)](https://shields.io/)
 
-This data type requires a medium level conversion in order to access. Performance varies wildly between different javascript environments, but you can expect access times for `char` types to be up to 100% slower (2x slower) than the `i32` (or `f32`) type.
+This data type requires a medium level conversion in order to access. Can be up to 100% slower (2x slower) than the [`f32`](#f32) type.
 
 [![type-safety-char](https://img.shields.io/badge/%F0%9F%AA%B2%20Type%20Saftey-info-blue)](https://shields.io/)
 
@@ -614,12 +702,7 @@ When a `char` field is set with an incorrect type an error will be thrown. If th
 
 Struct field names follow the same naming convention as [javascript variables](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Grammar_and_types#variables), excluding unicode characters.
 
-Fields also cannot be named (reserved field names):
-- `e` 
-- `_viewingIndex`
-- `ref`
-- `isNull`
-- `self`
+Fields also cannot be named `e`, `_viewingIndex`, `ref`,`index`, `self`.
 
 ```js
 import {vec} from "struct-vec"
@@ -643,7 +726,7 @@ const v10 = vec({my$_crazy0_fieldName123: "bool"})
 
 ## Compilers
 
-This package gives you two ways to define vecs, either through the exported `vec` (runtime compiler) or `vecCompile` (build-time compiler) functions. Both compilers emit the exact same vec classes.
+This package provides two ways to define vecs, either through the exported `vec` (runtime compiler) or `vecCompile` (build-time compiler) functions. Both compilers emit the exact same vec classes.
 
 The key differences between the compilers is that the build-time compiler returns a string containing your vec class which you can write to disk to use in another application, instead of creating a vec class which can be used right away.
 
@@ -665,7 +748,7 @@ Also, if you want a build tool like Webpack, ESBuild, Vite, etc. to apply transf
 
 ### Build-time Compiler
 
-The build-time compiler is almost exactly the same as the runtime one. The difference being, after the compiler takes your [struct def](#struct-definitions), it returns a string version of your vec class, instead of a vec class that can be immediately used by javascript.
+The build-time compiler is almost exactly the same as the runtime one. The difference being, after the compiler takes your [struct def](#struct-definitions), it returns a string version of your vec class, instead of a vec class that can be immediately used.
 
 Here's an example:
 
@@ -727,82 +810,21 @@ export class MyClass extends Vec {
     get cursorDef() { return MyClass.Cursor }
 }
 ```
-You can now import `MyClass` into a javascript or typescript file and it will work just like any other vec.
+You can now import `MyClass` into a javascript or typescript file and it will work just like any other vec. Other build options are found in the [API Reference](#api-reference).
 
-There are also other build options, such as generating the typescript version of a class, exporting via `export default`, etc. which I will leave to the [API Reference](#api-reference) to explain.
-
-Unfortunately, the build-time compiler does not come with a command-line tool - so you'll need to figure out exactly how you want to generate and store your vec classes.
+Unfortunately the build-time compiler does not come with a command-line tool - so you'll need to figure out how you want to generate and store your vec classes.
 
 ## Caveats
 
 ### Indexing does NOT Return Element
 
-> Indexing into a vec (calling ".index") is similar to calling ".next" on an iterator. Calling myVec.index(0) takes you to the first element but doesn't actually return the element.
+Indexing into a vec (calling `index`) is similar to calling [`next` on an iterator](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Iterators_and_Generators#iterators). Calling `myVec.index(0)` will take you to the first element, allowing you to access it's fields, but does not return the element. 
 
-The implication of this is that a vec can only point to one value at a time. In essence the `index` method takes you where the element "lives" and gives you tools to access it's fields, but does NOT return the element.
+To get an element by value use the [`e` field](#default_struct_field_e). To get an entire element by reference use the [`ref` field](#default_struct_field_ref).
 
-If you want to operate on the entire element use the `e` field, that comes [built-in with all structs](#default-struct-fields) regardless of their definition. Please note that the `e` field returns the element [by value and NOT by reference](#elements-of-a-vec-are-not-reference-types).
+The implication of all this, is that a vec can only point to one element at a time. If you want to look at two or more elements at once, you will have to create additional cursors, which can created with the `Vec.detachedCursor` method.
 
-Generally this is a non-issue, but it can cause bugs in situations like these:
-
-```js
-import {vec} from "struct-vec"
-
-const PositionV = vec({x: "f32", y: "f32", z: "f32"})
-const positions = new PositionV()
-
-positions.push({x: 1, y: 1, z: 1})
-positions.push({x: 3, y: 3, z: 3})
-positions.push({x: 2, y: 2, z: 2})
-
-// 🛑 incorrect example
-// point vec to index 0
-const element0 = positions.index(0)
-// point vec from 0 to 1
-const element1 = positions.index(1)
-
-// ❌ uh-oh, since I didn't capture the value of any of 
-// the indexes in a variable this occurs
-console.log(element0.x) // output: 3
-console.log(element1.x) // output: 3
-
-// ✅ correct example
-// point vec to 0 and capture entire element (by value)
-const element0correct = positions.index(0).e
-// move vec from 0 to 1 and capture entire element (by value)
-const element1correct = positions.index(1).e
-
-// 👍 works as expected 
-console.log(element0correct.x) // output: 1
-console.log(element1correct.x) // output: 3
-```
-
-or if attempting to swap elements:
-
-```js
-import {vec} from "struct-vec"
-
-const PositionV = vec({x: "f32", y: "f32", z: "f32"})
-const positions = new PositionV()
-
-positions.push({x: 1, y: 1, z: 1})
-positions.push({x: 3, y: 3, z: 3})
-
-// 🛑 incorrect swap
-const tmp = positions.index(0)
-positions.index(0) = positions.index(1) // throws Error
-positions.index(1) = tmp // throws Error
-
-// ✅ use the .swap method (most performant)
-positions.swap(0, 1)
-// ✅ you can manually swap them yourself 
-// using the "e" field
-const correctTmp = positions.index(0).e
-positions.index(0).e = positions.index(1).e
-positions.index(1).e = correctTmp
-```
-
-or when attempt to do nested imperative for loops (vec iterators don't have this problem):
+An example to illustrate this point is a nested for loop:
 
 ```js
 import {vec} from "struct-vec"
@@ -823,58 +845,44 @@ for (let i = 0; i < positions.length; i++) {
           const innerEl = positions.index(x)
      }
      // ❌ vec was moved to index 2 (vec.length) at the 
-     // end of the inner
-     // loop and is no longer pointing to index i
+     // end of the inner loop and is no longer 
+     // pointing to index i
      console.log(el.e) // output: {x: 2, y: 2, z: 2}
 }
 
-// ✅ correct example
+// ✅ Use a detached cursor
+// create a cursor initially pointing
+// at index 0
+const extraCursor = positions.detachedCursor(0)
 for (let i = 0; i < positions.length; i++) {
-     // move vec to index 0
-     // capture element in variable
-     // before inner loop changes index
-     const el = positions.index(i).e
+     const el = positions.index(i)
+     // move extra cursor from index 0 through 2
+     for (let x = 0; x < vec.length; x++) {
+          // detached cursors can be move via the "index"
+          // method, just like vecs but don't
+          // influence were the vec is pointing
+          const innerEl = extraCursor.index(x)
+     }
+     console.log(el.e) // output: what ever is at index i
+}
+
+// ✅ Use a reference, also works
+// but less efficent
+for (let i = 0; i < positions.length; i++) {
+     // refs are just a special
+     // type of "detachedCursor" under the hood
+     const el = positions.index(i).ref
      // move vec from index 0 through 2
      for (let x = 0; x < vec.length; x++) {
           const innerEl = positions.index(x)
      }
-     console.log(el) // output: what ever is at index i
+     console.log(el.e) // output: what ever is at index i
 }
-```
-
-### Elements of a Vec are not Reference Types
-
-Individual elements of a vec are behave like [primitive types](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#primitive_values) (numbers, booleans, etc.) and are not [reference types](https://javascript.info/reference-type), unlike javascript objects which are reference types. If you want to set a particular element, you must index into the vec and change it there.
-
-```js
-import {vec} from "struct-vec"
-
-const PositionV = vec({x: "f32", y: "f32", z: "f32"})
-const positions = new PositionV()
-
-positions.push({x: 1, y: 1, z: 1})
-
-// vec elements behave like primitives
-// so this gets the element by value
-const element0 = positions.index(0).e
-element0.x = 2
-console.log(element0) // output: {x: 2, y: 1, z: 1}
-// 🛑 changes not made to the element in vec
-console.log(positions.index(0).e) // output: {x: 1, y: 1, z: 1}
-
-// you must index into the vec to make changes
-positions.index(0).x = 2
-// ✅ changes made
-console.log(positions.index(0).e) // output: {x: 2, y: 1, z: 1}
-// ✅ also works
-const el = positions.index(0)
-el.x = 3
-console.log(positions.index(0).e) // output: {x: 3, y: 1, z: 1}
 ```
 
 ### Indexing Out of Bounds
 
-Indexing out of bounds negatively (`i < 0`) will return `undefined` just like an array. Indexing out of bounds past the length (`i > vec.length - 1`) may or may not return `undefined`. Sometimes a vec will keep garbage memory at the end to avoid resizing and this is the expected behavior.
+Indexing out of bounds negatively (`i < 0`) will return `undefined` just like an `Array`. Indexing out of bounds past the length (`i > vec.length - 1`) may or may not return `undefined`. Sometimes a vec will keep garbage memory at the end to avoid resizing and this is the expected behavior.
 
 ```js
 import {vec} from "struct-vec"
@@ -901,7 +909,7 @@ console.log(positions.index(10_000).x) // output: undefined
 
 ### Do Not Mutate Vec Length or Capacity during Multithreading
 
-Vecs are designed for multithreaded iterations and NOT multithreaded length-changing (or capacity-changing) mutations. Beyond the fact that mutating the length (or capacity) of a vec during multithreading is a bad idea, it will lead to unpredictable bugs. Do not use any methods that may potentially change the `length` (or `capacity`) of a vec during multithreading. 
+Do not use any methods that may potentially change the `length` (or `capacity`) of a vec during multi-threading. Doing so will lead to unpredictable bugs.
 
 Length-changing methods include: `pop`, `truncate`, `splice`, `shift`, `push`, `fill`, `unshift`
 
@@ -954,7 +962,7 @@ console.log(positions.length) // output: 5_000
 
 ES6 array destructuring operator (`const [element] = vec`), spread operator (`...vec`), and for...of loops (`for (const el of vec)`) should be avoided except if you want to [cast a vec to an array](#casting) or something similar. 
 
-These operators force vecs to deserialize their internal binary representation of structs to objects - [which is costly](#es6-iterator-loop) and can cause some unexpected side-effects due to fact that they [return elements by value , NOT by reference](#elements-of-a-vec-are-not-reference-types).
+These operators force vecs to deserialize their internal binary representation of structs to objects - [which is costly](#es6-iterator-loop) and can cause some unexpected side-effects due to fact that they return elements by [value](#default_struct_field_e), NOT by reference.
 
 NOTE: the `values`, `entries`, `keys` methods are also es6 iterators.
 
@@ -991,8 +999,6 @@ All test were done over 100 samples, with 4 warmup runs
 before recording. [The multithreaded benchmarks](#parallel-loop) are the only exception to this.
 
 Test machine was a Windows 11/WSL-Ubuntu 20.04 (x64), with a Intel i7-9750H CPU (12 core), and 16 GB RAM.
-
-All of these tests are micro benchmarks which rarely tell the entire truth about performance, but can give you an idea on what to expect from vecs in terms of performance.
 
 ### Iteration
 #### Imperative loop

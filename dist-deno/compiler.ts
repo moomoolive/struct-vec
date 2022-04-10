@@ -33,7 +33,7 @@ function restrictedFieldName(name: string): boolean {
         case "e":
         case "_viewingIndex":
         case "ref":
-        case "isNull":
+        case "index":
             return true
         default:
             return false

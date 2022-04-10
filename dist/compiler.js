@@ -26,7 +26,7 @@ function restrictedFieldName(name) {
         case "e":
         case "_viewingIndex":
         case "ref":
-        case "isNull":
+        case "index":
             return true;
         default:
             return false;
